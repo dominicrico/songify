@@ -1,0 +1,36 @@
+name: Build Slackify
+
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - '*.md'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - run: echo "${{ github.event.head_commit.message }}"
+
+  build:
+    needs: prepare
+    name: check for release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.TOKEN }}
+
+    - name: Set Node.js 12.14.1
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.14.1
+
+    - name: install dependencies
+      run: yarn install
+      env:
+        NODE_ENV: production
