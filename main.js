@@ -126,7 +126,7 @@ const getCurrentSpotifyTrack = (user) => {
       }
 
     }).catch(err => {
-      refreshSpotifyToken(user)
+      if (user.spotify_refresh) return refreshSpotifyToken(user)
     })
 }
 
