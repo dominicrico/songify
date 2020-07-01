@@ -53,4 +53,5 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+          su root
           pm2 reload slackify
