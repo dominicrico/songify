@@ -54,4 +54,6 @@ jobs:
         proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           su root
+          . /root/.nvm/nvm.sh
+          nvm use 12.14.1
           pm2 reload slackify
