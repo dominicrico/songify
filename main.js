@@ -40,7 +40,8 @@ const emoji = {
   house: ':pill:',
   acid: ':pill:',
   electro: ':pill:',
-  minimal: ':pill:'
+  minimal: ':pill:',
+  goa: ':pill:'
 }
 
 const refreshSpotifyToken = (user) => {
