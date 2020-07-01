@@ -38,7 +38,7 @@ jobs:
     - name: deploy files on server
       uses: burnett01/rsync-deployments@4.0
       with:
-        switches: -avzr --delete --exclude {'users.json', '*.html', '.env'}
+        switches: -avzr --delete --exclude={'users.json', '*.html', '.env'}
         path: "./"
         remote_path: "/var/www/slackify"
         remote_host: ${{ secrets.HOST }}
