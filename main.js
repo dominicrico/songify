@@ -240,6 +240,7 @@ app.post('/command', (req, res) => {
     let slack_user = req.fields.user_id
     const u = req.fields.text.replace(/<@([A-Z]\w+)\|\w+>/g, '$1')
 
+    console.log('user to find is', u)
 
     users.forEach(user => {
       if (user.user_id === slack_user) {
@@ -272,9 +273,29 @@ app.post('/command', (req, res) => {
                     headers: {
                       'Authorization': `Bearer ${slack_user.spotify_token}`
                     }
-                  }).then(body => {
-                    console.log('added song to your queue', body)
-                    return res.sendStatus(200)
+                  }).then(song => {
+                    console.log('added song to your queue', song)
+
+                    const artists = body.item.artists.map(artist => artist.name)
+
+                    return res.send(200).json({
+                      "blocks": [
+                          {
+                              "type": "section",
+                              "text": {
+                                  "type": "mrkdwn",
+                                  "text": "*Song wurde zu deine Spotify Warteschlange hinzugefügt :+1:*"
+                              }
+                          },
+                          {
+                              "type": "section",
+                              "text": {
+                                  "type": "mrkdwn",
+                                  "text": `${artists.join(',')} - ${body.item.name}`
+                              }
+                          }
+                      ]
+                    })
                   })
                 }
 
