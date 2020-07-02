@@ -238,21 +238,15 @@ app.post('/command', (req, res) => {
 
   if (req.fields.command && req.fields.command === '/slackify') {
     let slack_user = req.fields.user_id
-    const u = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
-
-    console.log('user to find is', u)
+    const u_id = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
 
     users.forEach(user => {
       if (user.user_id === slack_user) {
         slack_user = user
 
-        console.log('found slack user', slack_user)
-
         users.forEach(user => {
-          if (user.user_id === u) {
+          if (user.user_id === u_id) {
             const spotify_user = user
-
-            console.log('found spotify user', spotify_user)
 
             const opts = {
               headers: {
@@ -264,9 +258,9 @@ app.post('/command', (req, res) => {
               .then(body => body.data)
               .then(body => {
                 console.log('spotify current track of spotify_user', body)
-                if (body.uri) {
+                if (body.item.uri) {
 
-                  console.log('spotify_user listening to', body.uri)
+                  console.log('spotify_user listening to', body.item.uri)
                   axios({
                     method: 'POST',
                     url: `https://api.spotify.com/v1/me/player/queue?uri=${body.uri}`,
@@ -306,7 +300,26 @@ app.post('/command', (req, res) => {
     })
   }
 
-  return res.sendStatus(200)
+  const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+  return res.send(200).json(.json({
+    "blocks": [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
+            }
+        }
+    ]
+  }))
 })
 
 app.post('/events', (req, res) => {
