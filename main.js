@@ -239,14 +239,18 @@ app.post('/command', (req, res) => {
   if (req.fields.command && req.fields.command === '/slackify') {
     let slack_user = req.fields.user_id
     const u_id = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
+    let slack_user_found = false
 
     users.forEach(user => {
       if (user.user_id === slack_user) {
+        slack_user_found = true
         slack_user = user
+        let spotify_user_found = false
 
         users.forEach(user => {
           if (user.user_id === u_id) {
             const spotify_user = user
+            spotify_user_found = true
 
             const opts = {
               headers: {
@@ -312,7 +316,7 @@ app.post('/command', (req, res) => {
                       ]
                     })
                   })
-                }  
+                }
               }).catch(() => {
                 const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
@@ -335,52 +339,56 @@ app.post('/command', (req, res) => {
                   ]
                 })
               })
-          } else {
-            const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
-            return res.send(200).json({
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
-                  }
-                }
-              ]
-            })
           }
         })
-      } else {
-        const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-        return res.send(200).json({
-          "blocks": [
-            {
-              "type": "section",
-              "text": {
-                "type": "mrkdwn",
-                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+        if (!spotify_user_found) {
+          const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+          return res.send(200).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
+                }
               }
-            },
-            {
-              "type": "section",
-              "text": {
-                "type": "mrkdwn",
-                "text": `Ich konnte leider keinen Slackbenutzer finden ...`
-              }
-            }
-          ]
-        })
+            ]
+          })
+        }
       }
     })
+
+    if (!slack_user_found) {
+      const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+      return res.send(200).json({
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `Ich konnte leider keinen Slackbenutzer finden ...`
+            }
+          }
+        ]
+      })
+    }
   } else {
     return res.send(200).json({
       "blocks": [
