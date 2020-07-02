@@ -302,7 +302,7 @@ app.post('/command', (req, res) => {
 
   const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-  return res.send(200).json(.json({
+  return res.send(200).json({
     "blocks": [
         {
             "type": "section",
@@ -319,7 +319,7 @@ app.post('/command', (req, res) => {
             }
         }
     ]
-  }))
+  })
 })
 
 app.post('/events', (req, res) => {
