@@ -234,6 +234,8 @@ app.get('/spotify/redirect', (req, res) => {
 app.post('/command', (req, res) => {
   console.log(req.fields)
 
+  if (req.fields.ssl_check === '1') return res.sendStatus(200)
+
   if (req.fields.command && req.fields.command === '/slackify') {
     let slack_user = req.fields.user_id
     const u = req.fields.text.replace(/<@([A-Z]\w+)\|\w+>/g, '$1')
