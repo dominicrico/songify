@@ -223,7 +223,7 @@ app.get('/spotify/redirect', (req, res) => {
       if (!found) users.push(newUser)
 
       fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err) => {
-        return res.status(200).json('Es geht los... Verbunden!')
+        return res.redirect('slack://')
       })
     }).catch(err => {
       console.log(err)
@@ -245,9 +245,13 @@ app.post('/command', (req, res) => {
       if (user.user_id === slack_user) {
         slack_user = user
 
+        console.log('found slack user', slack_user)
+
         users.forEach(user => {
           if (user.user_id === u) {
             const spotify_user = user
+
+            console.log('found spotify user', spotify_user)
 
             const opts = {
               headers: {
@@ -257,15 +261,19 @@ app.post('/command', (req, res) => {
 
             axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
               .then(body => body.data)
-              .then(async (body) => {
+              .then(body => {
+                console.log('spotify current track of spotify_user', body)
                 if (body.uri) {
+
+                  console.log('spotify_user listening to', body.uri)
                   axios({
                     method: 'POST',
                     url: `https://api.spotify.com/v1/me/player/queue?uri=${body.uri}`,
                     headers: {
                       'Authorization': `Bearer ${slack_user.spotify_token}`
                     }
-                  }).then(() => {
+                  }).then(body => {
+                    console.log('added song to your queue', body)
                     return res.sendStatus(200)
                   })
                 }
