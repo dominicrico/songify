@@ -31,6 +31,7 @@ const emoji = {
   heavymetal: ':punch:',
   hiphop: ':sunglasses:',
   'hip-hop': ':sunglasses:',
+  'hip hop': ':sunglasses:',
   'deep german hip hop': ':sunglasses:',
   'german cloud rap': ':sunglasses:',
   'emo rap': ':sunglasses:',
@@ -107,9 +108,8 @@ const getCurrentGenres = (user, artists) => {
           let found = false
 
           if (emoji[genre] !== undefined && found === false) {
-            console.log(genre, emoji[genre])
             found = true;
-            return resolve(geemoji[genre])
+            return resolve(emoji[genre])
           }
 
           if (i === genres.length - 1 && found !== true) return resolve(undefined)
