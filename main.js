@@ -106,6 +106,7 @@ const getCurrentGenres = (user, artists) => {
         let status_emoji;
 
         genres.forEach((genre, i) => {
+          console.log(genre)
           if (emoji[genre] !== undefined && status_emoji === undefined) return resolve(emoji[genre])
 
           if (i === genres.length - 1) return resolve(undefined)
