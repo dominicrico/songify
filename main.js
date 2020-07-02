@@ -103,13 +103,16 @@ const getCurrentGenres = (user, artists) => {
     .then(body => body.data.genres)
     .then(genres => {
       return new Promise((resolve, reject) => {
-        let status_emoji;
-
         genres.forEach((genre, i) => {
-          console.log(genre)
-          if (emoji[genre] !== undefined && status_emoji === undefined) return resolve(emoji[genre])
+          let found = false
 
-          if (i === genres.length - 1) return resolve(undefined)
+          if (emoji[genre] !== undefined && found === false) {
+            console.log(genre, emoji[genre])
+            found = true;
+            return resolve(geemoji[genre])
+          }
+
+          if (i === genres.length - 1 && found !== true) return resolve(undefined)
         })
       })
     })
