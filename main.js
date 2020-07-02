@@ -231,72 +231,91 @@ app.get('/spotify/redirect', (req, res) => {
     })
 })
 
-app.post('/command', (req, res) => {
-  console.log(req.fields)
+const addSongToQueue = (req, res) => {
+  let slack_user = req.fields.user_id
+  const u_id = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
+  let slack_user_found = false
 
-  if (req.fields.ssl_check === '1') return res.sendStatus(200)
+  users.forEach(user => {
+    if (user.user_id === slack_user) {
+      slack_user_found = true
+      slack_user = user
+      let spotify_user_found = false
 
-  if (req.fields.command && req.fields.command === '/slackify') {
-    let slack_user = req.fields.user_id
-    const u_id = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
-    let slack_user_found = false
+      users.forEach(user => {
+        if (user.user_id === u_id) {
+          const spotify_user = user
+          spotify_user_found = true
 
-    users.forEach(user => {
-      if (user.user_id === slack_user) {
-        slack_user_found = true
-        slack_user = user
-        let spotify_user_found = false
-
-        users.forEach(user => {
-          if (user.user_id === u_id) {
-            const spotify_user = user
-            spotify_user_found = true
-
-            const opts = {
-              headers: {
-                'Authorization': `Bearer ${spotify_user.spotify_token}`
-              }
+          const opts = {
+            headers: {
+              'Authorization': `Bearer ${spotify_user.spotify_token}`
             }
+          }
 
-            axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
-              .then(body => body.data)
-              .then(body => {
-                console.log('spotify current track of spotify_user', body)
-                if (body.item.uri) {
+          axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
+            .then(body => body.data)
+            .then(body => {
+              console.log('spotify current track of spotify_user', body)
+              if (body.item.uri) {
 
-                  console.log('spotify_user listening to', body.item.uri)
-                  axios({
-                    method: 'POST',
-                    url: `https://api.spotify.com/v1/me/player/queue?uri=${body.item.uri}`,
-                    headers: {
-                      'Authorization': `Bearer ${slack_user.spotify_token}`
-                    }
-                  }).then(song => {
-                    console.log('added song to your queue', song)
+                console.log('spotify_user listening to', body.item.uri)
+                axios({
+                  method: 'POST',
+                  url: `https://api.spotify.com/v1/me/player/queue?uri=${body.item.uri}`,
+                  headers: {
+                    'Authorization': `Bearer ${slack_user.spotify_token}`
+                  }
+                }).then(song => {
+                  console.log('added song to your queue', song)
 
-                    const artists = body.item.artists.map(artist => artist.name)
+                  const artists = body.item.artists.map(artist => artist.name)
 
-                    return res.status(200).json({
-                      "blocks": [
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": "*Song wurde zu deine Spotify Warteschlange hinzugefügt :+1:*"
-                          }
-                        },
-                        {
-                          "type": "section",
-                          "text": {
-                            "type": "mrkdwn",
-                            "text": `${artists.join(',')} - ${body.item.name}`
-                          }
+                  return res.status(200).json({
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "*Song wurde zu deine Spotify Warteschlange hinzugefügt :+1:*"
                         }
-                      ]
-                    })
-                  }).catch(err => {
-                    console.log(err)
-                    console.log(err.response.data)
+                      },
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": `${artists.join(',')} - ${body.item.name}`
+                        }
+                      }
+                    ]
+                  })
+                }).catch(err => {
+
+                  if (err.response.data.error.status === 401) {
+                    const opts = {
+                      headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                      }
+                    }
+
+                    const body = {
+                      grant_type: 'refresh_token',
+                      refresh_token: slack_user.spotify_refresh,
+                      client_id: CLIENT_ID_SPOTIFY,
+                      client_secret: CLIENT_SECRET_SPOTIFY
+                    }
+
+                    axios.post('https://accounts.spotify.com/api/token', qs.stringify(body), opts)
+                      .then(body => body.data)
+                      .then(body => {
+                        slack_user.spotify_token = body.access_token
+                        slack_user.spotify_refresh = body.refresh_token
+
+                        addSongToQueue(req, res)
+                      }).catch(err => {
+                        console.log(err)
+                      })
+                  } else {
                     const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
                     return res.status(200).json({
@@ -317,80 +336,90 @@ app.post('/command', (req, res) => {
                         }
                       ]
                     })
-                  })
-                }
-              }).catch(() => {
-                const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
-                return res.status(200).json({
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
-                      }
-                    },
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": `Scheint so als ob Spotify gerade faxen macht ...`
-                      }
-                    }
-                  ]
+                  }
                 })
-              })
-          }
-        })
-
-        if (!spotify_user_found) {
-          const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
-          return res.status(200).json({
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
-                }
               }
-            ]
-          })
+            }).catch(() => {
+              const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+              return res.status(200).json({
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                    }
+                  }
+                ]
+              })
+            })
         }
-      }
-    })
-
-    if (!slack_user_found) {
-      const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
-      return res.status(200).json({
-        "blocks": [
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
-            }
-          },
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": `Ich konnte leider keinen Slackbenutzer finden ...`
-            }
-          }
-        ]
       })
+
+      if (!spotify_user_found) {
+        const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+        return res.status(200).json({
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
+              }
+            }
+          ]
+        })
+      }
     }
+  })
+
+  if (!slack_user_found) {
+    const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+    return res.status(200).json({
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `Ich konnte leider keinen Slackbenutzer finden ...`
+          }
+        }
+      ]
+    })
+  }
+}
+
+app.post('/command', (req, res) => {
+  console.log(req.fields)
+
+  if (req.fields.ssl_check === '1') return res.sendStatus(200)
+
+  if (req.fields.command && req.fields.command === '/slackify') {
+    addSongToQueue(req, res)
   } else {
     return res.status(200).json({
       "blocks": [
