@@ -132,7 +132,8 @@ const getCurrentSpotifyTrack = (user) => {
         const artists = body.item.artists.map(artist => artist.name)
         const track = `${artists.join(',')} - ${body.item.name}`
 
-        if (track !== user.status) {
+        if (track !== user.status || body.is_playing !== user.paused) {
+          user.paused = body.is_playing
           user.status = track
           user.genre = body.is_playing === true ? await getCurrentGenres(user, body.item.artists) : ':double_vertical_bar:'
           setUserStatus(user)
