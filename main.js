@@ -294,7 +294,8 @@ app.post('/command', (req, res) => {
                         }
                       ]
                     })
-                  }).catch(() => {
+                  }).catch(err => {
+                    console.log(err)
                     const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
                     return res.status(200).json({
