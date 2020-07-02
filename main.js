@@ -263,7 +263,7 @@ app.post('/command', (req, res) => {
                   console.log('spotify_user listening to', body.item.uri)
                   axios({
                     method: 'POST',
-                    url: `https://api.spotify.com/v1/me/player/queue?uri=${body.uri}`,
+                    url: `https://api.spotify.com/v1/me/player/queue?uri=${body.item.uri}`,
                     headers: {
                       'Authorization': `Bearer ${slack_user.spotify_token}`
                     }
