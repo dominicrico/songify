@@ -22,6 +22,7 @@ app.use(formidable())
 
 const emoji = {
   deathcore: ':punch:',
+  alternative: ':punch:',
   metalcore: ':punch:',
   hardcore: ':punch:',
   metal: ':punch:',
@@ -29,6 +30,7 @@ const emoji = {
   beatdown: ':punch:',
   heavymetal: ':punch:',
   hiphop: ':sunglasses:',
+  'hip-hop': ':sunglasses:',
   'deep german hip hop': ':sunglasses:',
   'german cloud rap': ':sunglasses:',
   'emo rap': ':sunglasses:',
@@ -36,6 +38,7 @@ const emoji = {
   gangsterrap: ':sunglasses:',
   deutschrap: ':sunglasses:',
   rnb: ':sunglasses:',
+  'r-n-b': ':sunglasses:',
   techno: ':pill:',
   house: ':pill:',
   acid: ':pill:',
@@ -80,7 +83,7 @@ const setUserStatus = (user) => {
   axios.post('https://slack.com/api/users.profile.set', {
       profile: {
           status_text: user.status.length > 100 ? user.status.substring(0, 97) + '...' : user.status,
-          status_emoji: emoji[user.genre] ? emoji[user.genre] : user.status.length > 0 ? ':notes:' : null,
+          status_emoji: user.genre ? user.genre : user.status.length > 0 ? ':notes:' : null,
           status_expiration: 0
       }
   }, opts)
@@ -89,7 +92,7 @@ const setUserStatus = (user) => {
     })
 }
 
-const getCurrentGenre = (user, artists) => {
+const getCurrentGenres = (user, artists) => {
   const opts = {
     headers: {
       'Authorization': `Bearer ${user.spotify_token}`
@@ -97,7 +100,16 @@ const getCurrentGenre = (user, artists) => {
   }
 
   return axios.get(`https://api.spotify.com/v1/artists/${artists[0].id}`, opts)
-    .then(body => body.data.genres[0])
+    .then(body => body.data.genres)
+    .then(genres => {
+      let status_emoji;
+      
+      genres.forEach((genre) => {
+        if (emoji[genre] !== undefined && emoji === undefined) status_emoji = emoji[genre]
+      })
+
+      return status_emoji
+    })
 }
 
 const getCurrentSpotifyTrack = (user) => {
@@ -116,7 +128,7 @@ const getCurrentSpotifyTrack = (user) => {
 
         if (track !== user.status) {
           user.status = track
-          user.genre = await getCurrentGenre(user, body.item.artists)
+          user.genres = await getCurrentGenres(user, body.item.artists)
           setUserStatus(user)
         }
       } else if (user.status !== '') {
