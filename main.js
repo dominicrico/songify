@@ -134,7 +134,7 @@ const getCurrentSpotifyTrack = (user) => {
 
         if (track !== user.status) {
           user.status = track
-          user.genres = await getCurrentGenres(user, body.item.artists)
+          user.genre = await getCurrentGenres(user, body.item.artists)
           setUserStatus(user)
         }
       } else if (user.status !== '') {
