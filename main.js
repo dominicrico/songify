@@ -238,7 +238,7 @@ app.post('/command', (req, res) => {
 
   if (req.fields.command && req.fields.command === '/slackify') {
     let slack_user = req.fields.user_id
-    const u = req.fields.text.replace(/<@([A-Z]\w+)\|\w+>/g, '$1')
+    const u = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
 
     console.log('user to find is', u)
 
