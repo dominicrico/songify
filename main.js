@@ -103,9 +103,9 @@ const getCurrentGenres = (user, artists) => {
     .then(body => body.data.genres)
     .then(genres => {
       let status_emoji;
-      
+
       genres.forEach((genre) => {
-        if (emoji[genre] !== undefined && emoji === undefined) status_emoji = emoji[genre]
+        if (emoji[genre] !== undefined && status_emoji === undefined) status_emoji = emoji[genre]
       })
 
       return status_emoji
