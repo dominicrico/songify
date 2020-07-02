@@ -160,7 +160,7 @@ app.get('/privacy', (req, res) => res.sendFile(__dirname + '/privacy.html'))
 app.get('/legal', (req, res) => res.redirect('https://meetrico.de/imprint'))
 
 app.get('/connect', (req, res) => {
-  return res.redirect(`https://slack.com/oauth/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write&redirect_uri=${REDIRECT_URI_SLACK}`)
+  return res.redirect(`https://slack.com/oauth/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write commands&redirect_uri=${REDIRECT_URI_SLACK}`)
 })
 
 app.get('/slack/redirect', (req, res) => {
@@ -288,9 +288,7 @@ app.post('/events', (req, res) => {
       if (user.user_id === req.fields.event.tokens.oauth[0]) {
         users.splice(i, 1)
 
-        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err) => {
-          return res.status(200).json('Schade!')
-        })
+        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err))
       }
     })
   }
