@@ -102,13 +102,15 @@ const getCurrentGenres = (user, artists) => {
   return axios.get(`https://api.spotify.com/v1/artists/${artists[0].id}`, opts)
     .then(body => body.data.genres)
     .then(genres => {
-      let status_emoji;
+      return new Promise((resolve, reject) => {
+        let status_emoji;
 
-      genres.forEach((genre) => {
-        if (emoji[genre] !== undefined && status_emoji === undefined) status_emoji = emoji[genre]
+        genres.forEach((genre, i) => {
+          if (emoji[genre] !== undefined && status_emoji === undefined) return resolve(emoji[genre])
+
+          if (i === genres.length - 1) return resolve(undefined)
+        })
       })
-
-      return status_emoji
     })
 }
 
