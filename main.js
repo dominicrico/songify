@@ -289,31 +289,30 @@ app.post('/command', (req, res) => {
                           }
                         }
                       ]
-                    }
-                  })
-                }).catch(() => {
-                  const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+                    })
+                  }).catch(() => {
+                    const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-                  return res.send(200).json({
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                    return res.send(200).json({
+                      "blocks": [
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                          }
+                        },
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                          }
                         }
-                      },
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": `Scheint so als ob Spotify gerade faxen macht ...`
-                        }
-                      }
-                    ]
+                      ]
+                    })
                   })
-                })
-
+                }  
               }).catch(() => {
                 const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
