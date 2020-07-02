@@ -134,7 +134,7 @@ const getCurrentSpotifyTrack = (user) => {
 
         if (track !== user.status) {
           user.status = track
-          user.genre = await getCurrentGenres(user, body.item.artists)
+          user.genre = body.is_playing === true ? await getCurrentGenres(user, body.item.artists) : ':double_vertical_bar:'
           setUserStatus(user)
         }
       } else if (user.status !== '') {
