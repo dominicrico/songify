@@ -48,7 +48,7 @@ const emoji = {
   goa: ':pill:'
 }
 
-const refreshSpotifyToken = (user) => {
+const refreshSpotifyToken = (user, cb) => {
   const opts = {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -183,7 +183,7 @@ app.get('/slack/redirect', (req, res) => {
         team_id: body.team_id
       }
 
-      return res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID_SPOTIFY}&scope=user-read-currently-playing&redirect_uri=${REDIRECT_URI_SPOTIFY}`)
+      return res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID_SPOTIFY}&scope=user-read-currently-playing user-modify-playback-state&redirect_uri=${REDIRECT_URI_SPOTIFY}`)
     }).catch(err => {
       console.log(err)
       res.status(500).json(err)
@@ -229,6 +229,51 @@ app.get('/spotify/redirect', (req, res) => {
       console.log(err)
       res.status(500).json(err)
     })
+})
+
+app.post('/command', (req, res) => {
+  console.log(req.fields)
+
+  if (req.fields.command && req.fields.command === '/slackify') {
+    let slack_user = req.fields.user_id
+    const u = req.fields.text.replace(/<@([A-Z]\w+)\|\w+>/g, '$1')
+
+
+    users.forEach(user => {
+      if (user.user_id === slack_user) {
+        slack_user = user
+
+        users.forEach(user => {
+          if (user.user_id === u) {
+            const spotify_user = user
+
+            const opts = {
+              headers: {
+                'Authorization': `Bearer ${spotify_user.spotify_token}`
+              }
+            }
+
+            axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
+              .then(body => body.data)
+              .then(async (body) => {
+                if (body.uri) {
+                  axios({
+                    method: 'POST',
+                    url: `https://api.spotify.com/v1/me/player/queue?uri=${body.uri}`,
+                    headers: {
+                      'Authorization': `Bearer ${slack_user.spotify_token}`
+                    }
+                  }).then(() => {
+                    return res.sendStatus(204)
+                  })
+                }
+
+              })
+          }
+        })
+      }
+    })
+  }
 })
 
 app.post('/events', (req, res) => {
