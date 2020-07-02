@@ -264,7 +264,7 @@ app.post('/command', (req, res) => {
                       'Authorization': `Bearer ${slack_user.spotify_token}`
                     }
                   }).then(() => {
-                    return res.sendStatus(204)
+                    return res.sendStatus(200)
                   })
                 }
 
@@ -274,6 +274,8 @@ app.post('/command', (req, res) => {
       }
     })
   }
+
+  return res.sendStatus(200)
 })
 
 app.post('/events', (req, res) => {
