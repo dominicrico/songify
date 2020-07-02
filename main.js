@@ -276,7 +276,7 @@ app.post('/command', (req, res) => {
 
                     const artists = body.item.artists.map(artist => artist.name)
 
-                    return res.send(200).json({
+                    return res.status(200).json({
                       "blocks": [
                         {
                           "type": "section",
@@ -297,7 +297,7 @@ app.post('/command', (req, res) => {
                   }).catch(() => {
                     const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-                    return res.send(200).json({
+                    return res.status(200).json({
                       "blocks": [
                         {
                           "type": "section",
@@ -320,7 +320,7 @@ app.post('/command', (req, res) => {
               }).catch(() => {
                 const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-                return res.send(200).json({
+                return res.status(200).json({
                   "blocks": [
                     {
                       "type": "section",
@@ -345,7 +345,7 @@ app.post('/command', (req, res) => {
         if (!spotify_user_found) {
           const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-          return res.send(200).json({
+          return res.status(200).json({
             "blocks": [
               {
                 "type": "section",
@@ -370,7 +370,7 @@ app.post('/command', (req, res) => {
     if (!slack_user_found) {
       const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
-      return res.send(200).json({
+      return res.status(200).json({
         "blocks": [
           {
             "type": "section",
@@ -390,7 +390,7 @@ app.post('/command', (req, res) => {
       })
     }
   } else {
-    return res.send(200).json({
+    return res.status(200).json({
       "blocks": [
         {
           "type": "section",
