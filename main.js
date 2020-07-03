@@ -138,7 +138,7 @@ const getCurrentSpotifyTrack = (user) => {
           user.genre = body.is_playing === true ? await getCurrentGenres(user, body.item.artists) : ':double_vertical_bar:'
           setUserStatus(user)
         }
-      } else if (user.status !== '') {
+      } else if (user.status !== '' || user.status !== user.original_status) {
         user.genre = user.original_emoji
         user.status = user.original_status
         setUserStatus(user)
@@ -220,6 +220,8 @@ app.get('/spotify/redirect', (req, res) => {
       .then(body => body.data)
       .then(body => {
         let found = false
+
+        console.log(body)
 
         newUser.original_emoji = body.status_emoji
         newUser.original_status = body.status_text
