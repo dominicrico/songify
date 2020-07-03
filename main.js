@@ -139,8 +139,8 @@ const getCurrentSpotifyTrack = (user) => {
           setUserStatus(user)
         }
       } else if (user.status !== '') {
-        user.genre = null
-        user.status = ''
+        user.genre = user.original_emoji
+        user.status = user.original_status
         setUserStatus(user)
       }
 
@@ -160,7 +160,7 @@ app.get('/privacy', (req, res) => res.sendFile(__dirname + '/privacy.html'))
 app.get('/legal', (req, res) => res.redirect('https://meetrico.de/imprint'))
 
 app.get('/connect', (req, res) => {
-  return res.redirect(`https://slack.com/oauth/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write commands&redirect_uri=${REDIRECT_URI_SLACK}`)
+  return res.redirect(`https://slack.com/oauth/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write users.profile:read commands&redirect_uri=${REDIRECT_URI_SLACK}`)
 })
 
 app.get('/slack/redirect', (req, res) => {
@@ -212,19 +212,33 @@ app.get('/spotify/redirect', (req, res) => {
       newUser.spotify_token = body.access_token
       newUser.spotify_refresh = body.refresh_token
 
-      let found = false
-      users.forEach((user, i) => {
-        if (found === false && user.user_id === newUser.user_id && user.team_id === newUser.team_id) {
-          found = true
-          users[i] = newUser
+      axios.get('https://slack.com/api/users.profile.get', {
+        headers: {
+          'Authorization': `Bearer ${body.access_token}`
         }
       })
+      .then(body => body.data)
+      .then(body => {
+        let found = false
 
-      if (!found) users.push(newUser)
+        newUser.original_emoji = body.status_emoji
+        newUser.original_status = body.status_text
 
-      fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err) => {
-        return res.redirect('slack://')
+        users.forEach((user, i) => {
+          if (found === false && user.user_id === newUser.user_id && user.team_id === newUser.team_id) {
+            found = true
+            users[i] = newUser
+          }
+        })
+
+        if (!found) users.push(newUser)
+
+        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err) => {
+          return res.redirect('slack://')
+        })
       })
+
+
     }).catch(err => {
       console.log(err)
       res.status(500).json(err)
