@@ -214,7 +214,7 @@ app.get('/spotify/redirect', (req, res) => {
 
       axios.get('https://slack.com/api/users.profile.get', {
         headers: {
-          'Authorization': `Bearer ${body.access_token}`
+          'Authorization': `Bearer ${newUser.slack_token}`
         }
       })
       .then(body => body.data)
@@ -459,7 +459,7 @@ app.post('/events', (req, res) => {
       if (user.user_id === req.fields.event.tokens.oauth[0]) {
         users.splice(i, 1)
 
-        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), (err))
+        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users))
       }
     })
   }
