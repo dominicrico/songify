@@ -223,8 +223,8 @@ app.get('/spotify/redirect', (req, res) => {
 
         console.log(body)
 
-        newUser.original_emoji = body.status_emoji
-        newUser.original_status = body.status_text
+        newUser.original_emoji = body.profile.status_emoji
+        newUser.original_status = body.profile.status_text
 
         users.forEach((user, i) => {
           if (found === false && user.user_id === newUser.user_id && user.team_id === newUser.team_id) {
