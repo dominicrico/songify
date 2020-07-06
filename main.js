@@ -16,37 +16,10 @@ const REDIRECT_URI_SPOTIFY = process.env.SLACKIFY_REDIRECT_URI_SPOTIFY
 
 let newUser
 const users = require('./users.json')
+const emoji = require('./emoji.json')
 
 const app = express()
 app.use(formidable())
-
-const emoji = {
-  deathcore: ':punch:',
-  alternative: ':punch:',
-  metalcore: ':punch:',
-  hardcore: ':punch:',
-  metal: ':punch:',
-  rock: ':punch:',
-  beatdown: ':punch:',
-  heavymetal: ':punch:',
-  hiphop: ':sunglasses:',
-  'hip-hop': ':sunglasses:',
-  'hip hop': ':sunglasses:',
-  'deep german hip hop': ':sunglasses:',
-  'german cloud rap': ':sunglasses:',
-  'emo rap': ':sunglasses:',
-  rap: ':sunglasses:',
-  gangsterrap: ':sunglasses:',
-  deutschrap: ':sunglasses:',
-  rnb: ':sunglasses:',
-  'r-n-b': ':sunglasses:',
-  techno: ':pill:',
-  house: ':pill:',
-  acid: ':pill:',
-  electro: ':pill:',
-  minimal: ':pill:',
-  goa: ':pill:'
-}
 
 const refreshSpotifyToken = (user, cb) => {
   const opts = {
@@ -429,13 +402,108 @@ const addSongToQueue = (req, res) => {
   }
 }
 
+const setEmojiForGenre = (req, res) => {
+  let slack_user = req.fields.user_id
+
+  users.forEach(user => {
+    if (user.user_id === slack_user) {
+      const opts = {
+        headers: {
+          'Authorization': `Bearer ${user.spotify_token}`
+        }
+      }
+
+      axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
+        .then(body => body.data)
+        .then(async (body) => {
+          if (body.item && body.item.artists) {
+            return axios.get(`https://api.spotify.com/v1/artists/${body.item.artists[0].id}`, opts)
+              .then(body => body.data.genres)
+              .then(genres => {
+                const emojiForGenre = genres[0]
+
+                if (emoji[emojiForGenre] !== undefined) {
+                  return res.status(200).json({
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": `*Für das Gerne ${emojiForGenre} gibt es leider schon ein emoji...  :-1:*`
+                        }
+                      }
+                    ]
+                  })
+                }
+
+                emoji[emojiForGenre] = req.fields.text.match(/:\w+:/g)[0]
+
+                fs.writeFile(`${__dirname}/emoji.json`, JSON.stringify(emoji), (err) => {
+                  if (err) {
+                    return res.status(200).json({
+                      "blocks": [
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                          }
+                        },
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": `${err.message}`
+                          }
+                        }
+                      ]
+                    })
+                  }
+
+                  return res.status(200).json({
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre} gesetzt!  :+1:*`
+                        }
+                      }
+                    ]
+                  })
+                })
+              })
+          }
+        })
+    }
+  })
+}
+
 app.post('/command', (req, res) => {
   console.log(req.fields)
 
   if (req.fields.ssl_check === '1') return res.sendStatus(200)
 
   if (req.fields.command && req.fields.command === '/slackify') {
-    addSongToQueue(req, res)
+    if (req.fields.text.indexOf('emote') === 0 || req.fields.text.indexOf('emoji') === 0) {
+      if (req.fields.text.match(/:\w+:/g) !== null) {
+        return setEmojiForGenre(req, res)
+      } else {
+        return res.status(200).json({
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*Sorry, aber um ein emoji für ein Genre zu setzen, solltest du eines mitschicken ...  :-1:*"
+              }
+            }
+          ]
+        })
+      }
+    } else {
+      return addSongToQueue(req, res)
+    }
   } else {
     return res.status(200).json({
       "blocks": [
