@@ -39,11 +39,11 @@ const refreshSpotifyToken = (user, cb) => {
     .then(body => body.data)
     .then(body => {
       user.spotify_token = body.access_token
-      user.spotify_refresh = body.refresh_token
 
       getCurrentSpotifyTrack(user)
     }).catch(err => {
       console.log(err)
+      return res.status(500).json(err)
     })
 }
 
@@ -63,6 +63,8 @@ const setUserStatus = (user) => {
   }, opts)
     .catch(err => {
       console.log(err)
+
+      return res.status(500).json(err)
     })
 }
 
@@ -111,7 +113,7 @@ const getCurrentSpotifyTrack = (user) => {
           user.genre = body.is_playing === true ? await getCurrentGenres(user, body.item.artists) : ':double_vertical_bar:'
           setUserStatus(user)
         }
-      } else if (user.status !== '' || user.status !== user.original_status) {
+      } else if (user.status !== '' && user.status !== user.original_status) {
         user.genre = user.original_emoji
         user.status = user.original_status
         setUserStatus(user)
@@ -245,10 +247,7 @@ const addSongToQueue = (req, res) => {
           axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
             .then(body => body.data)
             .then(body => {
-              console.log('spotify current track of spotify_user', body)
               if (body.item.uri) {
-
-                console.log('spotify_user listening to', body.item.uri)
                 axios({
                   method: 'POST',
                   url: `https://api.spotify.com/v1/me/player/queue?uri=${body.item.uri}`,
@@ -256,8 +255,6 @@ const addSongToQueue = (req, res) => {
                     'Authorization': `Bearer ${slack_user.spotify_token}`
                   }
                 }).then(song => {
-                  console.log('added song to your queue', song)
-
                   const artists = body.item.artists.map(artist => artist.name)
 
                   return res.status(200).json({
@@ -303,6 +300,25 @@ const addSongToQueue = (req, res) => {
                         addSongToQueue(req, res)
                       }).catch(err => {
                         console.log(err)
+
+                        return res.status(200).json({
+                          "blocks": [
+                            {
+                              "type": "section",
+                              "text": {
+                                "type": "mrkdwn",
+                                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "type": "mrkdwn",
+                                "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                              }
+                            }
+                          ]
+                        })
                       })
                   } else {
                     const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
@@ -328,8 +344,10 @@ const addSongToQueue = (req, res) => {
                   }
                 })
               }
-            }).catch(() => {
+            }).catch(err => {
               const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
+
+              console.log(err)
 
               return res.status(200).json({
                 "blocks": [
@@ -488,18 +506,57 @@ const setEmojiForGenre = (req, res) => {
                     })
                     .catch(err => {
                       console.log(err)
+
+                      return res.status(200).json({
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                            }
+                          },
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": `${err.message}`
+                            }
+                          }
+                        ]
+                      })
                     })
                 })
               })
           }
+        })
+        .catch(err => {
+          console.log(err)
+
+          return res.status(200).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": `${err.message}`
+                }
+              }
+            ]
+          })
         })
     }
   })
 }
 
 app.post('/command', (req, res) => {
-  console.log(req.fields)
-
   if (req.fields.ssl_check === '1') return res.sendStatus(200)
 
   if (req.fields.command && req.fields.command === '/slackify') {
@@ -538,8 +595,6 @@ app.post('/command', (req, res) => {
 })
 
 app.post('/events', (req, res) => {
-  console.log(req.fields)
-
   if (req.fields.event && req.fields.event.type === 'tokens_revoked') {
     users.forEach((user, i) => {
       if (user.user_id === req.fields.event.tokens.oauth[0]) {
