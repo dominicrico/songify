@@ -460,17 +460,33 @@ const setEmojiForGenre = (req, res) => {
                     })
                   }
 
-                  return res.status(200).json({
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre]} gesetzt!  :+1:*`
-                        }
+                  const slackOpts = {
+                    headers: {
+                      'Authorization': `Bearer ${user.slack_token}`
+                    }
+                  }
+
+                  axios.post('https://slack.com/api/users.profile.set', {
+                      profile: {
+                          status_emoji: emoji[emojiForGenre]
                       }
-                    ]
-                  })
+                  }, slackOpts)
+                    .then(() => {
+                      return res.status(200).json({
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre]} gesetzt!  :+1:*`
+                            }
+                          }
+                        ]
+                      })
+                    })
+                    .catch(err => {
+                      console.log(err)
+                    })
                 })
               })
           }
