@@ -120,7 +120,11 @@ const getCurrentSpotifyTrack = (user) => {
       }
 
     }).catch(err => {
-      if (user.spotify_refresh) return refreshSpotifyToken(user)
+      if (err.response.status !== 429 && user.spotify_refresh) {
+        return refreshSpotifyToken(user)
+      } else {
+        console.log(err.message, err.response)
+      }
     })
 }
 
@@ -128,7 +132,7 @@ setInterval(() => {
   users.forEach((user) => {
     getCurrentSpotifyTrack(user)
   })
-}, 5000)
+}, 3000)
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'))
 app.get('/privacy', (req, res) => res.sendFile(__dirname + '/privacy.html'))
