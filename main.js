@@ -486,7 +486,7 @@ const setEmojiForGenre = (req, res) => {
 
                   axios.post('https://slack.com/api/users.profile.set', {
                       profile: {
-                          status_text: user.status_text,
+                          status_text: user.status,
                           status_emoji: emoji[emojiForGenre],
                           status_expiration: 0
                       }
