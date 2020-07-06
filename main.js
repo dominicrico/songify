@@ -468,7 +468,9 @@ const setEmojiForGenre = (req, res) => {
 
                   axios.post('https://slack.com/api/users.profile.set', {
                       profile: {
-                          status_emoji: emoji[emojiForGenre]
+                          status_text: user.status_text,
+                          status_emoji: emoji[emojiForGenre],
+                          status_expiration: 0
                       }
                   }, slackOpts)
                     .then(() => {
@@ -543,7 +545,9 @@ app.post('/events', (req, res) => {
       if (user.user_id === req.fields.event.tokens.oauth[0]) {
         users.splice(i, 1)
 
-        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users))
+        fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), () => {
+          console.log('Benutzer gelöscht.')
+        })
       }
     })
   }
