@@ -466,7 +466,7 @@ const setEmojiForGenre = (req, res) => {
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre} gesetzt!  :+1:*`
+                          "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre]} gesetzt!  :+1:*`
                         }
                       }
                     ]
