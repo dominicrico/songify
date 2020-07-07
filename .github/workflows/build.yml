@@ -1,4 +1,4 @@
-name: Build Slackify
+name: Build Website
 
 on:
   push:
@@ -25,16 +25,6 @@ jobs:
       with:
         token: ${{ secrets.TOKEN }}
 
-    - name: Set Node.js 12.14.1
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12.14.1
-
-    - name: install dependencies
-      run: yarn install
-      env:
-        NODE_ENV: production
-
     - name: deploy files on server
       uses: burnett01/rsync-deployments@4.0
       with:
@@ -44,16 +34,3 @@ jobs:
         remote_host: ${{ secrets.HOST }}
         remote_user: ${{ secrets.SSH_USER }}
         remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: restart server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          su root
-          . /root/.nvm/nvm.sh
-          nvm use 12.14.1
-          pm2 reload slackify

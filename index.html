@@ -1,0 +1,217 @@
+  <!DOCTYPE html>
+  <html lang="en" dir="ltr">
+    <head>
+      <meta charset="utf-8">
+      <title>Slackify | Show your Spotify song in your Slack status</title>
+
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+      <link rel="stylesheet" href="/font.css">
+      <link rel="stylesheet" href="/style.css">
+
+      <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+      <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+      <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+      <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+      <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+      <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+      <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+      <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+      <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+      <link rel="manifest" href="/manifest.json">
+
+      <meta name="msapplication-TileColor" content="#1A1B28">
+      <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+      <meta name="theme-color" content="#1A1B28">
+
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+      <meta name="description" content="Slackify automaticly updates your Slack status with the current Song you're listening to on Spotify.">
+
+      <meta name="twitter:card" content="summary">
+      <meta name="twitter:url" content="https://slackify.dev/">
+      <meta name="twitter:title" content="Slackify | Show your Spotify song in your Slack status">
+      <meta name="twitter:description" content="Slackify automaticly updates your Slack status with the current Song you're listening to on Spotify.">
+      <meta name="twitter:image" content="https://slackify.dev/favicon-256x256.png">
+
+      <meta property="og:site_name" content="https://slackify.dev/">
+      <meta property="og:type" content="website">
+      <meta property="og:determiner" content="a">
+
+      <meta property="og:title" content="Slackify | Show your Spotify song in your Slack status">
+      <meta property="og:description" content="Slackify automaticly updates your Slack status with the current Song you're listening to on Spotify.">
+      <meta property="og:image" content="https://slackify.dev/favicon-256x256.png">
+
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+
+      <link rel="canonical" href="https://slackify.dev/">
+    </head>
+    <body>
+      <section class="hero hero-logo is-fullheight">
+        <div class="hero-body">
+          <a href="/connect" class="c2a-button-hero">
+            Get Slackify
+          </a>
+          <div class="container has-text-centered">
+            <div class="columns">
+              <div class="column">
+                <img src="logo.svg" alt="Slackify">
+                <h3 class="title is-4 has-text-white">Show your Spotify song in your Slack status</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-footer">
+          <div class="container has-text-centered">
+            <div class="columns">
+              <div class="column">
+                <span class="rotate-90 has-text-white">&#8672; &nbsp; all features</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section">
+         <div class="container has-text-centered">
+            <div class="columns">
+              <div class="column">
+                <h3 class="title is-1 is-bold">you are what you listening to.</h3>
+                <h3 class="title is-5">Spread your music with your Slack status<br> and see what others listen to</h3>
+              </div>
+            </div>
+            <div class="columns is-centered">
+              <div class="column is-8">
+                <div class="columns is-vcentered"  style="margin-bottom: 6rem;">
+                  <div class="column is-4">
+                    <figure class="image">
+                      <img src="screen_1.png">
+                    </figure>
+                  </div>
+                  <div class="column has-text-right">
+                    <h3 class="title is-4 is-bold">
+                      Update your Slack Status.
+                    </h3>
+                    <p>Slackify automaticly updates your Slack<br>status with the current Song you're<br>listening to on Spotify.</p>
+                  </div>
+                </div>
+                <div class="columns is-vcentered">
+                  <div class="column has-text-left">
+                    <h3 class="title is-4 is-bold">
+                      Explore new Songs.
+                    </h3>
+                    <p>Add the song of a team member to your<br>Spotify queue by the /slackify command<br>and explore new music.</p>
+                  </div>
+                  <div class="column is-5">
+                    <figure class="image">
+                      <img src="screen_2.png">
+                    </figure>
+                  </div>
+                </div>
+                <div class="columns">
+                  <div class="column">
+                    <a class="button is-slackify is-medium" href="/connect">Get Slackify now</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section bg-dark">
+        <div class="container has-text-centered">
+          <div class="columns">
+            <div class="column">
+              <h3 class="title is-1 is-bold has-text-white">/slackify <span class="blink">|</span></h3>
+              <h3 class="title is-5 has-text-white">We got you covered with all kind of commands</h3>
+            </div>
+          </div>
+          <div class="columns is-centered">
+            <div class="column is-8">
+              <div class="columns">
+                <div class="column is-4 has-text-grey has-text-right">
+                  @username
+                </div>
+                <div class="column has-text-grey-lighter has-text-weight-light has-text-left">
+                  Add the current playing song of @username to your own queue as next song
+                </div>
+              </div>
+              <div class="columns">
+                <div class="column is-4 has-text-grey has-text-right">
+                  emote :emote:
+                </div>
+                <div class="column has-text-grey-lighter has-text-weight-light has-text-left">
+                  Set the :emote: as emote for the genre of the current playing song
+                </div>
+              </div>
+              <div class="columns">
+                <div class="column is-4 has-text-grey has-text-right">
+                  pause
+                </div>
+                <div class="column has-text-grey-lighter has-text-weight-light has-text-left">
+                  Pause Slackify if you don't want to share your music right now.
+                </div>
+              </div>
+              <div class="columns">
+                <div class="column is-4 has-text-grey has-text-right">
+                  unpause | resume
+                </div>
+                <div class="column has-text-grey-lighter has-text-weight-light has-text-left">
+                  Resume Slackify and start sharing your music again, yeah!
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section bg-light">
+        <div class="container has-text-centered">
+          <div class="columns">
+            <div class="column">
+              <h3 class="title is-1 is-bold">let's get started.</h3>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column">
+              <a class="button is-slackify is-medium" href="/connect">Get Slackify now</a>
+            </div>
+          </div>
+        </div>
+      </section>
+      <footer class="footer">
+        <div class="columns">
+          <div class="column is-10">
+            <div class="columns">
+              <div class="column is-4">
+                <figure class="image is-48x48">
+                  <img src="logo.svg" alt="Slackify">
+                </figure>
+                <span class="has-text-white">Slackify</span>
+              </div>
+              <div class="column is-4">
+                <div class="columns">
+                  <div class="column">
+                    <a href="/legal">Imprint</a><br>
+                    <a href="/privacy" target="_blank">Privacy</a>
+                  </div>
+                  <div class="column">
+                    <a href="https://meetrico.de" target="_blank">Company</a><br>
+                    <a href="https://github.com/dominicrico/slackify" target="_blank">Github</a>
+                  </div>
+                </div>
+              </div>
+              <div class="column is-4"></div>
+            </div>
+            <div class="columns">
+              <div class="column">
+                <p class="has-text-grey-lighter is-size-7">&copy; 2020 MeetRico. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </body>
+  </html>

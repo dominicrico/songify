@@ -1,11 +1,8 @@
 node_modules
-fonts
 .env
 users.json
 emoji.json
-*.html
-*.svg
-*.png
-*.css
-*.jpg
-!logo.svg
+*.js
+*.md
+package.json
+*.lock
