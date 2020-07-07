@@ -282,6 +282,7 @@ const addSongToQueue = (req, res) => {
                     ]
                   })
                 }).catch(err => {
+                  console.log(err.response.data)
 
                   if (err.response.data.error.status === 401) {
                     const opts = {
@@ -327,8 +328,6 @@ const addSongToQueue = (req, res) => {
                         })
                       })
                   } else {
-                    const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
                     return res.status(200).json({
                       "blocks": [
                         {
@@ -351,9 +350,7 @@ const addSongToQueue = (req, res) => {
                 })
               }
             }).catch(err => {
-              const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
-              console.log(err)
+              console.log(err.response.data)
 
               return res.status(200).json({
                 "blocks": [
@@ -403,8 +400,6 @@ const addSongToQueue = (req, res) => {
   })
 
   if (!slack_user_found) {
-    const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
-
     return res.status(200).json({
       "blocks": [
         {
@@ -511,7 +506,7 @@ const setEmojiForGenre = (req, res) => {
                       })
                     })
                     .catch(err => {
-                      console.log(err)
+                      console.log(err.response.data)
 
                       return res.status(200).json({
                         "blocks": [
@@ -537,7 +532,7 @@ const setEmojiForGenre = (req, res) => {
           }
         })
         .catch(err => {
-          console.log(err)
+          console.log(err.response.data)
 
           return res.status(200).json({
             "blocks": [
@@ -598,35 +593,32 @@ app.post('/command', (req, res) => {
               "type": "section",
               "text": {
                 "type": "mrkdwn",
-                "text": "*Slackify is paused! You can start slackify again with /slackify unpause.  :sob:*"
+                "text": "*Slackify is paused! You can start slackify again with /slackify resume.  :sob:*"
               }
             }
           ]
         })
       })
-    } else if (req.fields.text === 'unpause') {
-       let slack_user = req.fields.user_id
+    } else if (req.fields.text === 'unpause' || req.fields.text === 'resume' ) {
+      let slack_user = req.fields.user_id
 
-       users.forEach(user => {
-         if (user.user_id === slack_user) {
-           user.pause_slackify = false
-         }
-       })
+      users.forEach(user => {
+        if (user.user_id === slack_user) {
+          user.pause_slackify = false
+        }
+      })
 
-       fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), () => {
-         return res.status(200).json({
-           "blocks": [
-             {
-               "type": "section",
-               "text": {
-                 "type": "mrkdwn",
-                 "text": "*Slackify is running again!  :kissing_heart:*"
-               }
-             }
-           ]
-         })
-       })
-     }
+      fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), () => {
+        return res.status(200).json({
+          "blocks": [{
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Slackify is running again!  :kissing_heart:*"
+            }
+          }]
+        })
+      })
     } else {
       return addSongToQueue(req, res)
     }
@@ -637,7 +629,7 @@ app.post('/command', (req, res) => {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "*Sorry, but I don't know this command...  :-1:*"
+            "text": "*Sorry, but I don't understand this command...  :-1:*"
           }
         }
       ]
