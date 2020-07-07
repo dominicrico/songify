@@ -130,7 +130,9 @@ const getCurrentSpotifyTrack = (user) => {
 
 setInterval(() => {
   users.forEach((user) => {
-    getCurrentSpotifyTrack(user)
+    if (user.pause_slackify !== true) {
+      getCurrentSpotifyTrack(user)
+    }
   })
 }, 3000)
 
@@ -267,7 +269,7 @@ const addSongToQueue = (req, res) => {
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": "*Song wurde zu deine Spotify Warteschlange hinzugefügt :+1:*"
+                          "text": "*Song was added to your Spotify queue :+1:*"
                         }
                       },
                       {
@@ -311,14 +313,14 @@ const addSongToQueue = (req, res) => {
                               "type": "section",
                               "text": {
                                 "type": "mrkdwn",
-                                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                                "text": "*Song could not be added to your Spotify queue. :-1:*"
                               }
                             },
                             {
                               "type": "section",
                               "text": {
                                 "type": "mrkdwn",
-                                "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                                "text": `Seems like there is an error with Spotify...`
                               }
                             }
                           ]
@@ -333,14 +335,14 @@ const addSongToQueue = (req, res) => {
                           "type": "section",
                           "text": {
                             "type": "mrkdwn",
-                            "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                            "text": "*Song could not be added to your Spotify queue. :-1:*"
                           }
                         },
                         {
                           "type": "section",
                           "text": {
                             "type": "mrkdwn",
-                            "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                            "text": `Seems like there is an error with Spotify...`
                           }
                         }
                       ]
@@ -359,14 +361,14 @@ const addSongToQueue = (req, res) => {
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                      "text": "*Song could not be added to your Spotify queue. :-1:*"
                     }
                   },
                   {
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": `Scheint so als ob Spotify gerade faxen macht ...`
+                      "text": `Seems like there is an error with Spotify...`
                     }
                   }
                 ]
@@ -384,14 +386,14 @@ const addSongToQueue = (req, res) => {
               "type": "section",
               "text": {
                 "type": "mrkdwn",
-                "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+                "text": "*Song could not be added to your Spotify queue. :-1:*"
               }
             },
             {
               "type": "section",
               "text": {
                 "type": "mrkdwn",
-                "text": `Falls ${userName} kein Slackify benutzt, musst du ihm das direkt sagen! Ansonsten hört er vielleicht gerade keine Musik!?`
+                "text": `If ${userName} doesn't use Slackify, you have to get him hooked up! Or he/she is not listening to music right now!?`
               }
             }
           ]
@@ -409,14 +411,14 @@ const addSongToQueue = (req, res) => {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "*Song konnte nicht zu deiner Spotify Warteschlange hinzugefügt werden :-1:*"
+              "text": "*Song could not be added to your Spotify queue. :-1:*"
           }
         },
         {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": `Ich konnte leider keinen Slackbenutzer finden ...`
+            "text": `I could not find a Slack user with this name...`
           }
         }
       ]
@@ -451,7 +453,7 @@ const setEmojiForGenre = (req, res) => {
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": `*Für das Gerne ${emojiForGenre} gibt es leider schon ein emoji...  :-1:*`
+                          "text": `*There is already an emoji for the genre "${emojiForGenre}"...  :-1:*`
                         }
                       }
                     ]
@@ -468,7 +470,7 @@ const setEmojiForGenre = (req, res) => {
                           "type": "section",
                           "text": {
                             "type": "mrkdwn",
-                            "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                            "text": `*Something went wrong...  :-1:*`
                           }
                         },
                         {
@@ -502,7 +504,7 @@ const setEmojiForGenre = (req, res) => {
                             "type": "section",
                             "text": {
                               "type": "mrkdwn",
-                              "text": `*Für das Gerne ${emojiForGenre} wurde der emoji ${emoji[emojiForGenre]} gesetzt!  :+1:*`
+                              "text": `*Hurray, for the genre "${emojiForGenre}" we will use the ${emoji[emojiForGenre]} emoji!  :+1:*`
                             }
                           }
                         ]
@@ -517,7 +519,7 @@ const setEmojiForGenre = (req, res) => {
                             "type": "section",
                             "text": {
                               "type": "mrkdwn",
-                              "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                              "text": `*Something went wrong...  :-1:*`
                             }
                           },
                           {
@@ -543,7 +545,7 @@ const setEmojiForGenre = (req, res) => {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": `*Irgendwas ist schief gelaufen...  :-1:*`
+                  "text": `*Something went wrong...  :-1:*`
                 }
               },
               {
@@ -574,12 +576,57 @@ app.post('/command', (req, res) => {
               "type": "section",
               "text": {
                 "type": "mrkdwn",
-                "text": "*Sorry, aber um ein emoji für ein Genre zu setzen, solltest du eines mitschicken ...  :-1:*"
+                "text": "*Sorry, but if you want to add an emoji for a genre, you should send me one...  :-1:*"
               }
             }
           ]
         })
       }
+    } else if (req.fields.text === 'pause') {
+      let slack_user = req.fields.user_id
+
+      users.forEach(user => {
+        if (user.user_id === slack_user) {
+          user.pause_slackify = true
+        }
+      })
+
+      fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), () => {
+        return res.status(200).json({
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*Slackify is paused! You can start slackify again with /slackify unpause.  :sob:*"
+              }
+            }
+          ]
+        })
+      })
+    } else if (req.fields.text === 'unpause') {
+       let slack_user = req.fields.user_id
+
+       users.forEach(user => {
+         if (user.user_id === slack_user) {
+           user.pause_slackify = false
+         }
+       })
+
+       fs.writeFile(`${__dirname}/users.json`, JSON.stringify(users), () => {
+         return res.status(200).json({
+           "blocks": [
+             {
+               "type": "section",
+               "text": {
+                 "type": "mrkdwn",
+                 "text": "*Slackify is running again!  :kissing_heart:*"
+               }
+             }
+           ]
+         })
+       })
+     }
     } else {
       return addSongToQueue(req, res)
     }
@@ -590,7 +637,7 @@ app.post('/command', (req, res) => {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "*Sorry, aber diesen Befehl kenne ich nicht ...  :-1:*"
+            "text": "*Sorry, but I don't know this command...  :-1:*"
           }
         }
       ]
