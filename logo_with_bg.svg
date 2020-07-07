@@ -12,6 +12,7 @@
         </linearGradient>
     </defs>
     <g id="Logo" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#1A1B27" x="0" y="0" width="512" height="512"></rect>
         <g id="Rectangle" transform="translate(97.000000, 90.500000)">
             <mask id="mask-2" fill="white">
                 <use xlink:href="#path-1"></use>

@@ -615,4 +615,3 @@ app.post('/events', (req, res) => {
 })
 
 app.listen(7869, () => console.log('slackify running on that one port you said it should run on...'))
-// app.listen(8080, () => console.log('slackify running on that one port you said it should run on...'))
