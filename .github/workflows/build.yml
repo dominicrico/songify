@@ -3,7 +3,7 @@ name: Build Website
 on:
   push:
     branches:
-    - master
+    - website
     paths-ignore:
     - '*.md'
 
