@@ -648,8 +648,8 @@ app.post('/events', (req, res) => {
         })
       }
     })
-  } else if (req.body.type === 'url_verification') {
-    return res.status(200).send(req.body.challenge)
+  } else if (req.fields.type === 'url_verification') {
+    return res.status(200).send(req.fields.challenge)
   }
 
   return res.sendStatus(200)
