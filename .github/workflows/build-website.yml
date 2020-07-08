@@ -1,0 +1,36 @@
+name: Build Website
+
+on:
+  push:
+    branches:
+    - website
+    paths-ignore:
+    - '*.md'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - run: echo "${{ github.event.head_commit.message }}"
+
+  build:
+    needs: prepare
+    name: check for release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.TOKEN }}
+
+    - name: deploy files on server
+      uses: burnett01/rsync-deployments@4.0
+      with:
+        switches: -avzr
+        path: "./"
+        remote_path: "/var/www/slackify"
+        remote_host: ${{ secrets.HOST }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
