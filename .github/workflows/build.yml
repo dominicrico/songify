@@ -56,4 +56,4 @@ jobs:
           su root
           . /root/.nvm/nvm.sh
           nvm use 12.14.1
-          pm2 reload slackify
+          pm2 restart Songify.io --update-env

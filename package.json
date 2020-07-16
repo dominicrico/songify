@@ -5,6 +5,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-formidable": "^1.2.0",
+    "mongodb": "3.5.3",
     "querystring": "^0.2.0"
   }
 }
