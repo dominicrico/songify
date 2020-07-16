@@ -160,7 +160,7 @@ MongoClient.connect(url, {
 
       }).catch(err => {
         if (err.response.status !== 429 && user.spotify_refresh) {
-          //return refreshSpotifyToken(user)
+          return refreshSpotifyToken(user)
         } else {
           console.log(err.message, err.response)
         }
