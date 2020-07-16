@@ -18,6 +18,7 @@ const MONGO_PASSWORD = process.env.SONGIFY_MONGO_PASSWORD
 const MONGO_USER = process.env.SONGIFY_MONGO_USER
 const MONGO_DATABASE = process.env.SONGIFY_MONGO_DATABASE
 const SONGIFY_COMMAND = process.env.SONGIFY_COMMAND
+const SONGIFY_PORT = process.env.SONGIFY_PORT
 
 console.log(`
   Current Env Vars used for Songify.io
@@ -32,6 +33,7 @@ console.log(`
   MONGO_USER: ${MONGO_USER}
   MONGO_DATABASE: ${MONGO_DATABASE}
   SONGIFY_COMMAND: ${SONGIFY_COMMAND}
+  SONGIFY_PORT: ${SONGIFY_PORT}
 `)
 
 const url = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@songify.io:20717/${MONGO_DATABASE}`
@@ -681,7 +683,7 @@ MongoClient.connect(url, {
     return res.sendStatus(200)
   })
 
-  app.listen(80, () => console.log('Songify.io running on that one port you said it should run on...'))
+  app.listen(SONGIFY_PORT, () => console.log('Songify.io running on that one port you said it should run on...'))
 }).catch(err => {
   console.log('MONGO ERROR:', err)
 })
