@@ -16,6 +16,7 @@ const CLIENT_SECRET_SPOTIFY = process.env.SONGIFY_CLIENT_SECRET_SPOTIFY
 const REDIRECT_URI_SPOTIFY = process.env.SONGIFY_REDIRECT_URI_SPOTIFY
 const MONGO_PASSWORD = process.env.SONGIFY_MONGO_PASSWORD
 const MONGO_USER = process.env.SONGIFY_MONGO_USER
+const MONGO_URL = process.env.SONGIFY_MONGO_URL
 const MONGO_DATABASE = process.env.SONGIFY_MONGO_DATABASE
 const SONGIFY_COMMAND = process.env.SONGIFY_COMMAND
 const SONGIFY_PORT = process.env.SONGIFY_PORT
@@ -32,19 +33,19 @@ console.log(`
   MONGO_PASSWORD: ${MONGO_PASSWORD}
   MONGO_USER: ${MONGO_USER}
   MONGO_DATABASE: ${MONGO_DATABASE}
+  MONGO_URL: ${MONGO_URL}
   SONGIFY_COMMAND: ${SONGIFY_COMMAND}
   SONGIFY_PORT: ${SONGIFY_PORT}
 `)
 
-const url = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@songify.io:20717/${MONGO_DATABASE}`
+const url = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_URL}:20717/${MONGO_DATABASE}`
 
 MongoClient.connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   ssl: true,
   authSource: 'admin',
-  sslValidate: false,
-  autoReconnect: true
+  sslValidate: false
 }).then(async client => {
   let newUser
   // const users = require('./users.json')
