@@ -1,4 +1,4 @@
-name: Build Slackify
+name: Build Songify
 
 on:
   push:
