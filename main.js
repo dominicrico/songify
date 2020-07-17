@@ -59,7 +59,7 @@ MongoClient.connect(url, {
   const app = express()
   app.use(formidable())
 
-  const refreshSpotifyToken = (user, cb) => {
+  const refreshSpotifyToken = (user) => {
     const opts = {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -81,7 +81,15 @@ MongoClient.connect(url, {
         User.updateOne({user_id: user.user_id}, {$set: {...user}})
           .then(() => getCurrentSpotifyTrack(user))
       }).catch(err => {
-        console.log(err)
+        console.log(err.response)
+        if (err.response.status === 400 && err.response.data.error === 'invalid_grand') {
+          User.findOneAndDelete({user_id: user.user_id}).then(() => {
+            console.log('Benutzer gelöscht.')
+            return res.sendStatus(201)
+          })
+        } else {
+          return res.sendStatus(500)
+        }
       })
   }
 
@@ -246,8 +254,6 @@ MongoClient.connect(url, {
         .then(body => {
           let found = false
 
-          console.log(body)
-
           newUser.original_emoji = body.profile.status_emoji
           newUser.original_status = body.profile.status_text
 
@@ -403,7 +409,7 @@ MongoClient.connect(url, {
               })
             }
           }).catch(err => {
-            console.log(err.response.data)
+            console.log(err.response)
 
             return res.status(200).json({
               "blocks": [
@@ -490,8 +496,8 @@ MongoClient.connect(url, {
               .then(async spotifyGenres => {
                 const genres = await Genre.find({team_id, genre: {$in: spotifyGenres}}, {genre: 1, _id: 0}).toArray()
                 const checkGenres = genres.map(g => g.genre)
-                const newGenres = spotifyGenres.filter(g => g.indexOf(checkGenres) === -1)
-
+                const newGenres = spotifyGenres.filter(g => checkGenres.indexOf(g) === -1)
+                console.log(checkGenres, spotifyGenres)
                 if (!newGenres || newGenres.length === 0) {
                   return res.status(200).json({
                     "blocks": [
