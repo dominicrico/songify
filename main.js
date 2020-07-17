@@ -497,7 +497,6 @@ MongoClient.connect(url, {
                 const genres = await Genre.find({team_id, genre: {$in: spotifyGenres}}, {genre: 1, _id: 0}).toArray()
                 const checkGenres = genres.map(g => g.genre)
                 const newGenres = spotifyGenres.filter(g => checkGenres.indexOf(g) === -1)
-                console.log(checkGenres, spotifyGenres)
 
                 if (!spotifyGenres || spotifyGenres.length === 0) {
                   return res.status(200).json({
@@ -593,37 +592,35 @@ MongoClient.connect(url, {
                     ]
                   })
                 })
-          .catch(err => {
-            console.log(err)
+            .catch(err => {
+              console.log(err.response)
 
-            return res.status(200).json({
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": `*Something went wrong...  :-1:*`
+              return res.status(200).json({
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": `*Something went wrong...  :-1:*`
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": `${err.message}`
+                    }
                   }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": `${err.message}`
-                  }
-                }
-              ]
+                ]
+              })
             })
-          })
-        }
-      })
+          }
+        })
     }
   }
 
   app.post('/command', (req, res) => {
     if (req.fields.ssl_check === '1') return res.sendStatus(200)
-
-    console.log(req.fields)
 
     if (req.fields.command && req.fields.command === SONGIFY_COMMAND) {
       if (req.fields.text.indexOf('emote') === 0 || req.fields.text.indexOf('emoji') === 0) {
@@ -705,7 +702,7 @@ MongoClient.connect(url, {
     return res.sendStatus(200)
   })
 
-  app.listen(SONGIFY_PORT, () => console.log('Songify.io running on that one port you said it should run on...'))
+  app.listen(SONGIFY_PORT, () => console.log(`Songify.io running on port ${SONGIFY_PORT}, you said it should run on...`))
 }).catch(err => {
   console.log('MONGO ERROR:', err)
 })
