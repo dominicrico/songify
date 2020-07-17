@@ -498,6 +498,21 @@ MongoClient.connect(url, {
                 const checkGenres = genres.map(g => g.genre)
                 const newGenres = spotifyGenres.filter(g => checkGenres.indexOf(g) === -1)
                 console.log(checkGenres, spotifyGenres)
+
+                if (!spotifyGenres || spotifyGenres.length === 0) {
+                  return res.status(200).json({
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": `*Sorry, but there is no genre listed on Spotify for that song...  :-1:*`
+                        }
+                      }
+                    ]
+                  })
+                }
+
                 if (!newGenres || newGenres.length === 0) {
                   return res.status(200).json({
                     "blocks": [
