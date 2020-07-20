@@ -14,10 +14,12 @@ const REDIRECT_URI_SLACK = process.env.SONGIFY_REDIRECT_URI_SLACK
 const CLIENT_ID_SPOTIFY = process.env.SONGIFY_CLIENT_ID_SPOTIFY
 const CLIENT_SECRET_SPOTIFY = process.env.SONGIFY_CLIENT_SECRET_SPOTIFY
 const REDIRECT_URI_SPOTIFY = process.env.SONGIFY_REDIRECT_URI_SPOTIFY
+
 const MONGO_PASSWORD = process.env.SONGIFY_MONGO_PASSWORD
 const MONGO_USER = process.env.SONGIFY_MONGO_USER
 const MONGO_URL = process.env.SONGIFY_MONGO_URL
 const MONGO_DATABASE = process.env.SONGIFY_MONGO_DATABASE
+
 const SONGIFY_COMMAND = process.env.SONGIFY_COMMAND
 const SONGIFY_PORT = process.env.SONGIFY_PORT
 
@@ -193,12 +195,12 @@ MongoClient.connect(url, {
   app.get('/legal', (req, res) => res.redirect('https://meetrico.de/imprint'))
 
   app.get('/connect', (req, res) => {
-    return res.redirect(`https://slack.com/oauth/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write users.profile:read commands&redirect_uri=${REDIRECT_URI_SLACK}`)
+    return res.redirect(`https://slack.com/oauth/v2/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write,users.profile:read,commands&redirect_uri=${REDIRECT_URI_SLACK}`)
   })
 
   app.get('/slack/redirect', (req, res) => {
     const opts = {
-      url: `https://slack.com/api/oauth.access?code=${req.query.code}&client_id=${CLIENT_ID_SLACK}&client_secret=${CLIENT_SECRET_SLACK}&redirect_uri=${REDIRECT_URI_SLACK}`,
+      url: `https://slack.com/api/oauth.v2.access?code=${req.query.code}&client_id=${CLIENT_ID_SLACK}&client_secret=${CLIENT_SECRET_SLACK}&redirect_uri=${REDIRECT_URI_SLACK}`,
       method: 'GET',
       responseType: 'json'
     }
@@ -208,12 +210,12 @@ MongoClient.connect(url, {
       .then(body => {
 
         newUser = {
-          slack_token: body.access_token,
+          slack_token: body.authed_user.access_token,
           spotify_token: null,
           spotify_refresh: null,
           status: null,
-          user_id: body.user_id,
-          team_id: body.team_id
+          user_id: body.authed_user.id,
+          team_id: body.team.id
         }
 
         return res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID_SPOTIFY}&scope=user-read-currently-playing user-modify-playback-state&redirect_uri=${REDIRECT_URI_SPOTIFY}`)
@@ -497,7 +499,6 @@ MongoClient.connect(url, {
                 const genres = await Genre.find({team_id, genre: {$in: spotifyGenres}}, {genre: 1, _id: 0}).toArray()
                 const checkGenres = genres.map(g => g.genre)
                 const newGenres = spotifyGenres.filter(g => checkGenres.indexOf(g) === -1)
-                console.log(checkGenres, spotifyGenres)
 
                 if (!spotifyGenres || spotifyGenres.length === 0) {
                   return res.status(200).json({
@@ -593,37 +594,35 @@ MongoClient.connect(url, {
                     ]
                   })
                 })
-          .catch(err => {
-            console.log(err)
+            .catch(err => {
+              console.log(err.response)
 
-            return res.status(200).json({
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": `*Something went wrong...  :-1:*`
+              return res.status(200).json({
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": `*Something went wrong...  :-1:*`
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": `${err.message}`
+                    }
                   }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": `${err.message}`
-                  }
-                }
-              ]
+                ]
+              })
             })
-          })
-        }
-      })
+          }
+        })
     }
   }
 
   app.post('/command', (req, res) => {
     if (req.fields.ssl_check === '1') return res.sendStatus(200)
-
-    console.log(req.fields)
 
     if (req.fields.command && req.fields.command === SONGIFY_COMMAND) {
       if (req.fields.text.indexOf('emote') === 0 || req.fields.text.indexOf('emoji') === 0) {
@@ -705,7 +704,7 @@ MongoClient.connect(url, {
     return res.sendStatus(200)
   })
 
-  app.listen(SONGIFY_PORT, () => console.log('Songify.io running on that one port you said it should run on...'))
+  app.listen(SONGIFY_PORT, () => console.log(`Songify.io running on port ${SONGIFY_PORT}, you said it should run on...`))
 }).catch(err => {
   console.log('MONGO ERROR:', err)
 })
