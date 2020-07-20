@@ -195,7 +195,7 @@ MongoClient.connect(url, {
   app.get('/legal', (req, res) => res.redirect('https://meetrico.de/imprint'))
 
   app.get('/connect', (req, res) => {
-    return res.redirect(`https://slack.com/oauth/v2/authorize?client_id=${CLIENT_ID_SLACK}&scope=users.profile:write,users.profile:read,commands&redirect_uri=${REDIRECT_URI_SLACK}`)
+    return res.redirect(`https://slack.com/oauth/v2/authorize?client_id=${CLIENT_ID_SLACK}&scope=commands&user_scope=users.profile:write,users.profile:read&redirect_uri=${REDIRECT_URI_SLACK}`)
   })
 
   app.get('/slack/redirect', (req, res) => {
