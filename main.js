@@ -671,8 +671,27 @@ MongoClient.connect(url, {
             }]
           })
         })
-      } else {
+      } else if (req.fields.text.match(/<@(\w+)\|.+>/g) !== null) {
         return addSongToQueue(req, res)
+      } else {
+        return res.status(200).json({
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*Sorry, but I don't understand this command...  :-1:*"
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "Visit https://songify.io to see a full list of commands."
+              }
+            }
+          ]
+        })
       }
     } else {
       return res.status(200).json({
@@ -682,6 +701,13 @@ MongoClient.connect(url, {
             "text": {
               "type": "mrkdwn",
               "text": "*Sorry, but I don't understand this command...  :-1:*"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "Visit https://songify.io to see a full list of commands."
             }
           }
         ]
