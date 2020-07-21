@@ -74,12 +74,12 @@ p {
   text-transform: uppercase;
 }
 
-.is-slackify {
+.is-songify {
   background: #1A1B28;
   color: #fff;
 }
 
-.is-slackify:hover {
+.is-songify:hover {
   color: #fff;
 }
 
