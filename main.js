@@ -29,13 +29,16 @@ console.log(`
   CLIENT_ID_SLACK: ${CLIENT_ID_SLACK}
   CLIENT_SECRET_SLACK: ${CLIENT_SECRET_SLACK}
   REDIRECT_URI_SLACK: ${REDIRECT_URI_SLACK}
+
   CLIENT_ID_SPOTIFY: ${CLIENT_ID_SPOTIFY}
   CLIENT_SECRET_SPOTIFY: ${CLIENT_SECRET_SPOTIFY}
   REDIRECT_URI_SPOTIFY: ${REDIRECT_URI_SPOTIFY}
+
   MONGO_PASSWORD: ${MONGO_PASSWORD}
   MONGO_USER: ${MONGO_USER}
   MONGO_DATABASE: ${MONGO_DATABASE}
   MONGO_URL: ${MONGO_URL}
+
   SONGIFY_COMMAND: ${SONGIFY_COMMAND}
   SONGIFY_PORT: ${SONGIFY_PORT}
 `)
@@ -50,18 +53,23 @@ MongoClient.connect(url, {
   sslValidate: false
 }).then(async client => {
   let newUser
-  // const users = require('./users.json')
-  // const emoji = require('./emoji.json')
 
   const User = client.db(MONGO_DATABASE).collection('users')
   const Genre = client.db(MONGO_DATABASE).collection('genres')
+  const Log = client.db(MONGO_DATABASE).collection('logs')
 
-  const users = await User.find({}).toArray()
+  const createLogEntry = (action, service, message, user_id, isError) => {
+    const createdAt = new Date()
+
+    Log.insertOne({action, service, createdAt, message, user: user_id, error: isError})
+  }
 
   const app = express()
   app.use(formidable())
 
   const refreshSpotifyToken = (user) => {
+    createLogEntry('refresh_token', 'spotify', null, user._id, false)
+
     const opts = {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -80,22 +88,24 @@ MongoClient.connect(url, {
       .then(body => {
         user.spotify_token = body.access_token
 
+        createLogEntry('refresh_token_success', 'spotify', null, user._id, false)
+
         User.updateOne({user_id: user.user_id}, {$set: {...user}})
           .then(() => getCurrentSpotifyTrack(user))
       }).catch(err => {
-        console.log(err.response)
-        if (err.response.status === 400 && err.response.data.error === 'invalid_grand') {
+        createLogEntry('refresh_token_failed', 'spotify', err.response.data, user._id, true)
+
+        if (err.response.status === 400 && err.response.data && err.response.data.error === 'invalid_grant') {
           User.findOneAndDelete({user_id: user.user_id}).then(() => {
-            console.log('Benutzer gelöscht.')
-            return res.sendStatus(201)
+            createLogEntry('token_revoked', 'spotify', 'user_deleted', user._id, true)
           })
-        } else {
-          return res.sendStatus(500)
         }
       })
   }
 
   const setUserStatus = (user) => {
+    createLogEntry('set_user_status', 'slack', null, user._id, false)
+
     const opts = {
       headers: {
         'Authorization': `Bearer ${user.slack_token}`
@@ -103,23 +113,25 @@ MongoClient.connect(url, {
     }
 
     axios.post('https://slack.com/api/users.profile.set', {
-        profile: {
-            status_text: user.status.length > 100 ? user.status.substring(0, 97) + '...' : user.status,
-            status_emoji: user.genre ? user.genre : user.status.length > 0 ? ':notes:' : null,
-            status_expiration: 0
-        }
+      profile: {
+        status_text: user.status.length > 100 ? user.status.substring(0, 97) + '...' : user.status,
+        status_emoji: user.genre ? user.genre : user.status.length > 0 ? ':notes:' : null,
+        status_expiration: 0
+      }
     }, opts)
       .then(() => {
+        createLogEntry('set_user_status_success', 'slack', null, user._id, false)
         return User.updateOne({user_id: user.user_id}, {$set: {...user}})
       })
       .catch(err => {
         console.log(err)
-
+        createLogEntry('set_user_status_failed', 'slack', err.response.data, user._id, true)
         return res.status(500).json(err)
       })
   }
 
   const getCurrentGenres = (user, artists) => {
+    createLogEntry('get_current_genres', 'spotify', null, user._id, false)
     const opts = {
       headers: {
         'Authorization': `Bearer ${user.spotify_token}`
@@ -132,12 +144,14 @@ MongoClient.connect(url, {
         return new Promise((resolve, reject) => {
           Genre.findOne({genre: { $in : genres }, team_id: user.team_id})
             .then(genre => {
+              createLogEntry('get_current_genres_success', 'spotify', genres, user._id, false)
               if (genre) {
                 return resolve(genre.emoji)
               } else {
                 return resolve(undefined)
               }
             }).catch(err => {
+              createLogEntry('get_current_genres_failure', 'spotify', err.response.data, user._id, true)
               console.log(err)
               return resolve(undefined)
             })
@@ -146,6 +160,8 @@ MongoClient.connect(url, {
   }
 
   const getCurrentSpotifyTrack = (user) => {
+    createLogEntry('get_current_track', 'spotify', null, user._id, false)
+
     const opts = {
       headers: {
         'Authorization': `Bearer ${user.spotify_token}`
@@ -155,6 +171,8 @@ MongoClient.connect(url, {
     axios.get('https://api.spotify.com/v1/me/player/currently-playing', opts)
       .then(body => body.data)
       .then(async (body) => {
+        createLogEntry('get_current_track_success', 'spotify', body, user._id, false)
+
         if (body.item && body.item.artists) {
           const artists = body.item.artists.map(artist => artist.name)
           const track = `${artists.join(',')} - ${body.item.name}`
@@ -172,6 +190,8 @@ MongoClient.connect(url, {
         }
 
       }).catch(err => {
+        createLogEntry('get_current_track_failure', 'spotify', err.response.data, user._id, true)
+
         if (err.response.status !== 429 && user.spotify_refresh) {
           return refreshSpotifyToken(user)
         } else {
@@ -195,10 +215,14 @@ MongoClient.connect(url, {
   app.get('/legal', (req, res) => res.redirect('https://meetrico.de/imprint'))
 
   app.get('/connect', (req, res) => {
+    createLogEntry('new_connection', 'songify', null, null, false)
+
     return res.redirect(`https://slack.com/oauth/v2/authorize?client_id=${CLIENT_ID_SLACK}&scope=commands&user_scope=users.profile:write,users.profile:read&redirect_uri=${REDIRECT_URI_SLACK}`)
   })
 
   app.get('/slack/redirect', (req, res) => {
+    createLogEntry('new_connection', 'slack', null, null, false)
+
     const opts = {
       url: `https://slack.com/api/oauth.v2.access?code=${req.query.code}&client_id=${CLIENT_ID_SLACK}&client_secret=${CLIENT_SECRET_SLACK}&redirect_uri=${REDIRECT_URI_SLACK}`,
       method: 'GET',
@@ -208,6 +232,8 @@ MongoClient.connect(url, {
     axios(opts)
       .then(body => body.data)
       .then(body => {
+
+        createLogEntry('new_connection_success', 'slack', null, null, false)
 
         newUser = {
           slack_token: body.authed_user.access_token,
@@ -220,12 +246,14 @@ MongoClient.connect(url, {
 
         return res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID_SPOTIFY}&scope=user-read-currently-playing user-modify-playback-state&redirect_uri=${REDIRECT_URI_SPOTIFY}`)
       }).catch(err => {
-        console.log(err)
+        createLogEntry('new_connection_failure', 'slack', err.response.data, null, true)
         res.status(500).json(err)
       })
   })
 
   app.get('/spotify/redirect', (req, res) => {
+    createLogEntry('new_connection', 'spotify', null, null, false)
+
     const opts = {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -243,6 +271,8 @@ MongoClient.connect(url, {
     axios.post('https://accounts.spotify.com/api/token', qs.stringify(body), opts)
       .then(body => body.data)
       .then(body => {
+
+        createLogEntry('new_connection_success', 'spotify', null, null, false)
 
         newUser.spotify_token = body.access_token
         newUser.spotify_refresh = body.refresh_token
@@ -265,6 +295,8 @@ MongoClient.connect(url, {
         })
 
       }).catch(err => {
+        createLogEntry('new_connection_failure', 'spotify', err.response.data, null, true)
+
         console.log(err)
         res.status(500).json(err)
       })
@@ -275,6 +307,8 @@ MongoClient.connect(url, {
     const u_id = req.fields.text.replace(/<@(\w+)\|.+>/g, '$1')
 
     const sluser = await User.findOne({user_id: slack_user})
+
+    createLogEntry('add_song_to_queue', 'spotify', null, sluser._id, false)
 
     if (sluser) {
       slack_user = sluser
@@ -303,6 +337,8 @@ MongoClient.connect(url, {
               }).then(song => {
                 const artists = body.item.artists.map(artist => artist.name)
 
+                createLogEntry('add_song_to_queue_success', 'spotify', null, sluser._id, false)
+
                 return res.status(200).json({
                   "blocks": [
                     {
@@ -324,7 +360,12 @@ MongoClient.connect(url, {
               }).catch(err => {
                 console.log(err.response.data)
 
+                createLogEntry('add_song_to_queue_failure', 'spotify', err.response.data, sluser._id, true)
+
                 if (err.response.data.error.status === 401) {
+
+                  createLogEntry('refresh_token', 'spotify', null, slack_user._id, false)
+
                   const opts = {
                     headers: {
                       'Content-Type': 'application/x-www-form-urlencoded'
@@ -343,6 +384,8 @@ MongoClient.connect(url, {
                     .then(body => {
                       slack_user.spotify_token = body.access_token
                       slack_user.spotify_refresh = body.refresh_token
+
+                      createLogEntry('refresh_token_success', 'spotify', null, slack_user._id, false)
 
                       User.updateOne({user_id: slack_user.user_id}, {$set: {...slack_user}}, {upsert: true}).then(() => {
                         addSongToQueue(req, res)
@@ -368,6 +411,14 @@ MongoClient.connect(url, {
                       })
                     }).catch(err => {
                       console.log(err)
+
+                      createLogEntry('add_song_to_queue_failure', 'spotify', err.response.data, sluser._id, true)
+
+                      if (err.response.status === 400 && err.response.data && err.response.data.error === 'invalid_grant') {
+                        User.findOneAndDelete({user_id: user.user_id}).then(() => {
+                          createLogEntry('token_revoked', 'spotify', 'user_deleted', user._id, true)
+                        })
+                      }
 
                       return res.status(200).json({
                         "blocks": [
@@ -413,6 +464,8 @@ MongoClient.connect(url, {
           }).catch(err => {
             console.log(err.response)
 
+            createLogEntry('add_song_to_queue_failure', 'spotify', err.response.data, sluser._id, true)
+
             return res.status(200).json({
               "blocks": [
                 {
@@ -435,6 +488,8 @@ MongoClient.connect(url, {
       } else {
         const userName = req.fields.text.replace(/<@\w+\|(.+)>/gi)
 
+        createLogEntry('add_song_to_queue_failure', 'songify', 'no songify user found to add song', sluser._id, true)
+
         return res.status(200).json({
           "blocks": [
             {
@@ -455,6 +510,8 @@ MongoClient.connect(url, {
         })
       }
     } else {
+      createLogEntry('add_song_to_queue_failure', 'songify', 'no songify user found to add song', sluser._id, true)
+
       return res.status(200).json({
         "blocks": [
           {
@@ -481,6 +538,8 @@ MongoClient.connect(url, {
     const team_id = req.fields.team_id
 
     const user = await User.findOne({user_id: slack_user})
+
+    createLogEntry('set_genre_emoji', 'songify', null, user._id, false)
 
     if (user) {
       const opts = {
@@ -555,6 +614,8 @@ MongoClient.connect(url, {
                   .catch(err => {
                     console.log(err.response)
 
+                    createLogEntry('set_genre_emoji_failure', 'songify',  err.message, user._id, true)
+
                     return res.status(200).json({
                       "blocks": [
                         {
@@ -575,6 +636,8 @@ MongoClient.connect(url, {
                     })
                   })
                 }).catch(err => {
+                  createLogEntry('set_genre_emoji_failure', 'spotify',  err.response.data, user._id, true)
+
                   return res.status(200).json({
                     "blocks": [
                       {
@@ -596,6 +659,8 @@ MongoClient.connect(url, {
                 })
             .catch(err => {
               console.log(err.response)
+
+              createLogEntry('set_genre_emoji_failure', 'spotify',  err.response.data, user._id, true)
 
               return res.status(200).json({
                 "blocks": [
@@ -621,8 +686,12 @@ MongoClient.connect(url, {
     }
   }
 
-  app.post('/command', (req, res) => {
+  app.post('/command', async (req, res) => {
     if (req.fields.ssl_check === '1') return res.sendStatus(200)
+
+    const user = await User.findOne({user_id: req.fields.user_id})
+
+    createLogEntry('received_command', 'slack', {command: req.fields.command, text: req.fields.text} , user._id, false)
 
     if (req.fields.command && req.fields.command === SONGIFY_COMMAND) {
       if (req.fields.text.indexOf('emote') === 0 || req.fields.text.indexOf('emoji') === 0) {
@@ -642,8 +711,6 @@ MongoClient.connect(url, {
           })
         }
       } else if (req.fields.text === 'pause') {
-        let slack_user = req.fields.user_id
-
         User.updateOne({user_id: req.fields.user_id}, {$set: {pause_songify: true}}).then(user => {
           return res.status(200).json({
             "blocks": [
@@ -656,10 +723,22 @@ MongoClient.connect(url, {
               }
             ]
           })
+        }).catch(err => {
+          createLogEntry('received_command_failure', 'slack', err.message , user._id, true)
+
+          return res.status(500).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Sorry, something went wrong... Please try it again."
+                }
+              }
+            ]
+          })
         })
       } else if (req.fields.text === 'unpause' || req.fields.text === 'resume' ) {
-        let slack_user = req.fields.user_id
-
         User.updateOne({user_id: req.fields.user_id},  {$set: {pause_songify: false}}).then(user => {
           return res.status(200).json({
             "blocks": [{
@@ -670,10 +749,26 @@ MongoClient.connect(url, {
               }
             }]
           })
+        }).catch(err => {
+          createLogEntry('received_command_failure', 'slack', err.message , user._id, true)
+
+          return res.status(500).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Sorry, something went wrong... Please try it again."
+                }
+              }
+            ]
+          })
         })
       } else if (req.fields.text.match(/<@(\w+)\|.+>/g) !== null) {
         return addSongToQueue(req, res)
       } else {
+        createLogEntry('received_command_failure', 'slack', 'unknown_command' , user._id, true)
+
         return res.status(200).json({
           "blocks": [
             {
@@ -694,6 +789,8 @@ MongoClient.connect(url, {
         })
       }
     } else {
+      createLogEntry('received_command_failure', 'slack', 'unknown_command' , user._id, true)
+
       return res.status(200).json({
         "blocks": [
           {
@@ -717,12 +814,20 @@ MongoClient.connect(url, {
 
   app.post('/events', (req, res) => {
     if (req.fields.event && req.fields.event.type === 'tokens_revoked') {
-      User.findOneAndDelete({user_id: user.user_id}).then(() => {
-        console.log('Benutzer gelöscht.')
-        return res.sendStatus(201)
-      }).catch(err => {
-        return res.sendStatus(500)
+      const users = User.find({slack_token: { $in: req.fields.event.tokens.oauth }}).toArray()
+
+      users.forEach(user => {
+        createLogEntry('token_revoke', 'slack', null , user._id, false)
+
+        User.findOneAndDelete({user_id: user.user_id}).then(() => {
+          console.log('Benutzer gelöscht.')
+          createLogEntry('token_revoke_success', 'slack', null , user._id, false)
+        }).catch(err => {
+          createLogEntry('token_revoke_failure', 'slack', err.message , user._id, true)
+        })
       })
+
+      return res.sendStatus(201)
     } else if (req.fields.type === 'url_verification') {
       return res.status(200).send(req.fields.challenge)
     }
