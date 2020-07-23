@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const axios = require('axios')
 const qs = require('querystring')
+const crypto = require('crypto')
 const fs = require('fs')
 const formidable = require('express-formidable')
 const MongoClient = require('mongodb').MongoClient
@@ -10,6 +11,8 @@ const MongoClient = require('mongodb').MongoClient
 const CLIENT_ID_SLACK = process.env.SONGIFY_CLIENT_ID_SLACK
 const CLIENT_SECRET_SLACK = process.env.SONGIFY_CLIENT_SECRET_SLACK
 const REDIRECT_URI_SLACK = process.env.SONGIFY_REDIRECT_URI_SLACK
+
+const SIGNING_SECRET_SLACK = process.env.SONGIFY_SIGNING_SECRET_SLACK
 
 const CLIENT_ID_SPOTIFY = process.env.SONGIFY_CLIENT_ID_SPOTIFY
 const CLIENT_SECRET_SPOTIFY = process.env.SONGIFY_CLIENT_SECRET_SPOTIFY
@@ -29,6 +32,7 @@ console.log(`
   CLIENT_ID_SLACK: ${CLIENT_ID_SLACK}
   CLIENT_SECRET_SLACK: ${CLIENT_SECRET_SLACK}
   REDIRECT_URI_SLACK: ${REDIRECT_URI_SLACK}
+  SIGNING_SECRET_SLACK: ${SIGNING_SECRET_SLACK}
 
   CLIENT_ID_SPOTIFY: ${CLIENT_ID_SPOTIFY}
   CLIENT_SECRET_SPOTIFY: ${CLIENT_SECRET_SPOTIFY}
@@ -66,6 +70,27 @@ MongoClient.connect(url, {
 
   const app = express()
   app.use(formidable())
+
+  const fixedEncodeURIComponent = str => {
+    return str.replace(/[!'()*~]/g, function (c) {
+      return '%' + c.charCodeAt(0).toString(16).toUpperCase()
+    })
+  }
+
+  const verifySlackRequest = (req) => {
+    const xSlackRequestTimeStamp = req.get('X-Slack-Request-Timestamp')
+    const slackSignature = req.get('X-Slack-Signature')
+    const bodyPayload = fixedEncodeURIComponent(qs.stringify(req.fields).replace(/%20/g, '+')) // Fix for #1
+    if (!(xSlackRequestTimeStamp && slackSignature && bodyPayload)) {
+      return false
+    }
+    const baseString = `v0:${xSlackRequestTimeStamp}:${bodyPayload}`
+    const hash = 'v0=' + crypto.createHmac('sha256', SIGNING_SECRET_SLACK)
+      .update(baseString)
+      .digest('hex')
+
+    return (slackSignature === hash)
+  }
 
   const refreshSpotifyToken = (user) => {
     createLogEntry('refresh_token', 'spotify', null, user._id, false)
@@ -687,6 +712,8 @@ MongoClient.connect(url, {
   }
 
   app.post('/command', async (req, res) => {
+    if (!verifySlackRequest(req)) return res.sendStatus(403)
+
     if (req.fields.ssl_check === '1') return res.sendStatus(200)
 
     const user = await User.findOne({user_id: req.fields.user_id})
@@ -813,6 +840,8 @@ MongoClient.connect(url, {
   })
 
   app.post('/events', (req, res) => {
+    if (!verifySlackRequest(req)) return res.sendStatus(403)
+
     if (req.fields.event && req.fields.event.type === 'tokens_revoked') {
       const users = User.find({slack_token: { $in: req.fields.event.tokens.oauth }}).toArray()
 
