@@ -234,7 +234,7 @@ MongoClient.connect(url, {
           user.registered = true
           setInterval(() => {
             getCurrentSpotifyTrack(user)
-          , 5000})
+          , 10000})
         }
       }, 2000)
     })
