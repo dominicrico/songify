@@ -150,13 +150,13 @@ MongoClient.connect(url, {
     }, opts)
       .then(() => {
         createLogEntry('set_user_status_success', 'slack', null, user._id, false)
-        next()
+        if (next && typeof next === 'function') next()
         return User.updateOne({user_id: user.user_id}, {$set: {...user}})
       })
       .catch(err => {
         console.log(err)
         createLogEntry('set_user_status_failed', 'slack', err.response.data, user._id, true)
-        return next()
+        if (next && typeof next === 'function') return next()
       })
   }
 
