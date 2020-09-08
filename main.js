@@ -236,9 +236,13 @@ MongoClient.connect(url, {
 
       async.forEachOf(songifyUsers, (user, i, next) => {
         if (user.pause_songify !== true) {
-          console.log('Registering listener for user')
-          songifyUsers[i].registered = true
-          getCurrentSpotifyTrack(user, next)
+          setTimeout(() => {
+            console.log('Registering listener for user')
+            songifyUsers[i].registered = true
+            getCurrentSpotifyTrack(user, next)
+          }, 3000)
+        } else {
+          next()
         }
       }, () => registerTrackListener())
     })
