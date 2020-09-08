@@ -738,8 +738,14 @@ MongoClient.connect(url, {
           })
         }
       } else if (req.fields.text.indexOf('status') === 0) {
-        const status = req.fields.text.replace('status ', '')
-        User.updateOne({user_id: req.fields.user_id}, {$set: {original_status: status}}).then(user => {
+        const status = req.fields.text.replace('status ', '').replace(/:\w+:\s/, '')
+        const emote = req.fields.text.match(/:\w+:/g)
+        const overwrite = {}
+
+        if (status) overwrite.original_status = status
+        if (emote) overwrite.original_emoji = emote
+
+        User.updateOne({user_id: req.fields.user_id}, {$set: overwrite }).then(user => {
           return res.status(200).json({
             "blocks": [
               {
