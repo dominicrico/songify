@@ -722,7 +722,7 @@ MongoClient.connect(url, {
 
     if (req.fields.command && req.fields.command === SONGIFY_COMMAND) {
       if (req.fields.text.indexOf('emote') === 0 || req.fields.text.indexOf('emoji') === 0) {
-        if (req.fields.text.match(/:\w+:/g) !== null) {
+        if (req.fields.text.match(/:.+:/g) !== null) {
           return setEmojiForGenre(req, res)
         } else {
           return res.status(200).json({
@@ -738,8 +738,8 @@ MongoClient.connect(url, {
           })
         }
       } else if (req.fields.text.indexOf('status') === 0) {
-        const status = req.fields.text.replace('status ', '').replace(/:\w+:\s/, '')
-        const emote = req.fields.text.match(/:\w+:/g)
+        const status = req.fields.text.replace(/status(\s:.+:)?\s(\w+)/, '$2')
+        const emote = req.fields.text.match(/:.+:/g)
         const overwrite = {}
 
         if (status) overwrite.original_status = status
@@ -752,7 +752,7 @@ MongoClient.connect(url, {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": `*Your status when songify is not running is now set to: ${status}*`
+                  "text": `*Your status when songify is not running is now set to: ${emote} ${status}*`
                 }
               }
             ]
