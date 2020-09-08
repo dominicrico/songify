@@ -221,7 +221,7 @@ MongoClient.connect(url, {
         if (err.response.status !== 429 && user.spotify_refresh) {
           return refreshSpotifyToken(user)
         } else {
-          console.log(err.message, 'retry-after', err.response.header['retry-after'])
+          console.log(err.message, 'retry-after', err.response.headers['retry-after'])
         }
       })
   }
