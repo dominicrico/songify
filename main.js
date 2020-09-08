@@ -126,6 +126,8 @@ MongoClient.connect(url, {
           User.findOneAndDelete({user_id: user.user_id}).then(() => {
             createLogEntry('token_revoked', 'spotify', 'user_deleted', user._id, true)
           })
+        } else {
+          return next()
         }
       })
   }
@@ -154,8 +156,7 @@ MongoClient.connect(url, {
       .catch(err => {
         console.log(err)
         createLogEntry('set_user_status_failed', 'slack', err.response.data, user._id, true)
-        next()
-        return res.status(500).json(err)
+        return next()
       })
   }
 
@@ -223,10 +224,8 @@ MongoClient.connect(url, {
         if (err.response.status !== 429 && user.spotify_refresh) {
           return refreshSpotifyToken(user, next)
         } else {
-          setTimeout(() => {
-            next()
-          }, err.response.headers['retry-after'] * 1000)
           console.log(err.message, 'retry-after', err.response.headers['retry-after'])
+          return next()
         }
       })
   }
