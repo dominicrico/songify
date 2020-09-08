@@ -57,6 +57,7 @@ MongoClient.connect(url, {
   sslValidate: false
 }).then(async client => {
   let newUser
+  let songifyUsers = []
 
   const User = client.db(MONGO_DATABASE).collection('users')
   const Genre = client.db(MONGO_DATABASE).collection('genres')
@@ -220,20 +221,32 @@ MongoClient.connect(url, {
         if (err.response.status !== 429 && user.spotify_refresh) {
           return refreshSpotifyToken(user)
         } else {
-          console.log(err.message, err.response)
+          console.log(err.message, 'retry-after', err.response.header['retry-after'])
         }
       })
   }
 
-  setInterval(() => {
-    User.find({}).toArray().then(users => {
-      users.forEach((user) => {
-        if (user.pause_songify !== true) {
-          getCurrentSpotifyTrack(user)
+  const registerTrackListener = () => {
+    songifyUsers.forEach((user) => {
+      setTimeout(() => {
+        if (user.pause_songify !== true && user.registered !== true) {
+          console.log('Registering listener for user')
+          user.registered = true
+          setInterval(() => {
+            getCurrentSpotifyTrack(user)
+          , 5000})
         }
-      })
+      }, 2000)
     })
-  }, 3000)
+  }
+
+  setInterval(() => {
+    console.log('Find all songify users')
+    User.find({}).toArray().then(users => {
+      songifyUsers = users
+      registerTrackListener()
+    })
+  }, 5000)
 
   app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'))
   app.get('/privacy', (req, res) => res.sendFile(__dirname + '/privacy.html'))
