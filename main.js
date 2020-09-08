@@ -225,7 +225,9 @@ MongoClient.connect(url, {
           return refreshSpotifyToken(user, next)
         } else {
           console.log(err.message, 'retry-after', err.response.headers['retry-after'])
-          return next()
+          setTimeout(() => {
+            return next()
+          }, parseInt(err.response.headers['retry-after'], 10) * 1000)
         }
       })
   }
