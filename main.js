@@ -94,7 +94,7 @@ MongoClient.connect(url, {
     return (slackSignature === hash)
   }
 
-  const refreshSpotifyToken = (user) => {
+  const refreshSpotifyToken = (user, next) => {
     createLogEntry('refresh_token', 'spotify', null, user._id, false)
 
     const opts = {
@@ -118,7 +118,7 @@ MongoClient.connect(url, {
         createLogEntry('refresh_token_success', 'spotify', null, user._id, false)
 
         User.updateOne({user_id: user.user_id}, {$set: {...user}})
-          .then(() => getCurrentSpotifyTrack(user))
+          .then(() => getCurrentSpotifyTrack(user, next))
       }).catch(err => {
         createLogEntry('refresh_token_failed', 'spotify', err.response.data, user._id, true)
 
@@ -130,7 +130,7 @@ MongoClient.connect(url, {
       })
   }
 
-  const setUserStatus = (user) => {
+  const setUserStatus = (user, next) => {
     createLogEntry('set_user_status', 'slack', null, user._id, false)
 
     const opts = {
@@ -188,7 +188,7 @@ MongoClient.connect(url, {
       })
   }
 
-  const getCurrentSpotifyTrack = (user) => {
+  const getCurrentSpotifyTrack = (user, next) => {
     createLogEntry('get_current_track', 'spotify', null, user._id, false)
 
     const opts = {
@@ -210,18 +210,18 @@ MongoClient.connect(url, {
             user.paused = body.is_playing
             user.status = track
             user.genre = body.is_playing === true ? await getCurrentGenres(user, body.item.artists) : ':double_vertical_bar:'
-            setUserStatus(user)
+            setUserStatus(user, next)
           }
         } else if (user.status !== '' && user.status !== user.original_status) {
           user.genre = user.original_emoji
           user.status = user.original_status
-          setUserStatus(user)
+          setUserStatus(user, next)
         }
 
       }).catch(err => {
         createLogEntry('get_current_track_failure', 'spotify', err.response.data, user._id, true)
         if (err.response.status !== 429 && user.spotify_refresh) {
-          return refreshSpotifyToken(user)
+          return refreshSpotifyToken(user, next)
         } else {
           setTimeout(() => {
             next()
