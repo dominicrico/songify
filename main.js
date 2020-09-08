@@ -1,5 +1,6 @@
 require('dotenv').config()
 
+const async = require('async')
 const express = require('express')
 const axios = require('axios')
 const qs = require('querystring')
@@ -147,11 +148,13 @@ MongoClient.connect(url, {
     }, opts)
       .then(() => {
         createLogEntry('set_user_status_success', 'slack', null, user._id, false)
+        next()
         return User.updateOne({user_id: user.user_id}, {$set: {...user}})
       })
       .catch(err => {
         console.log(err)
         createLogEntry('set_user_status_failed', 'slack', err.response.data, user._id, true)
+        next()
         return res.status(500).json(err)
       })
   }
@@ -217,36 +220,32 @@ MongoClient.connect(url, {
 
       }).catch(err => {
         createLogEntry('get_current_track_failure', 'spotify', err.response.data, user._id, true)
-
         if (err.response.status !== 429 && user.spotify_refresh) {
           return refreshSpotifyToken(user)
         } else {
+          setTimeout(() => {
+            next()
+          }, err.response.headers['retry-after'] * 1000)
           console.log(err.message, 'retry-after', err.response.headers['retry-after'])
         }
       })
   }
 
   const registerTrackListener = () => {
-    songifyUsers.forEach((user) => {
-      setTimeout(() => {
-        if (user.pause_songify !== true && user.registered !== true) {
+    User.find({}).toArray().then(users => {
+      songifyUsers = users
+
+      async.forEachOf(songifyUsers, (user, i, next) => {
+        if (user.pause_songify !== true) {
           console.log('Registering listener for user')
-          user.registered = true
-          setInterval(() => {
-            getCurrentSpotifyTrack(user)
-          , 10000})
+          songifyUsers[i].registered = true
+          getCurrentSpotifyTrack(user, next)
         }
-      }, 2000)
+      }, () => registerTrackListener())
     })
   }
 
-  setInterval(() => {
-    console.log('Find all songify users')
-    User.find({}).toArray().then(users => {
-      songifyUsers = users
-      registerTrackListener()
-    })
-  }, 5000)
+  registerTrackListener()
 
   app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'))
   app.get('/privacy', (req, res) => res.sendFile(__dirname + '/privacy.html'))
