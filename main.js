@@ -743,7 +743,7 @@ MongoClient.connect(url, {
         const overwrite = {}
 
         if (status) overwrite.original_status = status
-        if (emote) overwrite.original_emoji = emote
+        if (emote) overwrite.original_emoji = emote[0]
 
         User.updateOne({user_id: req.fields.user_id}, {$set: overwrite }).then(user => {
           return res.status(200).json({
@@ -752,7 +752,7 @@ MongoClient.connect(url, {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": `*Your status when songify is not running is now set to: ${emote} ${status}*`
+                  "text": `*Your status when songify is not running is now set to: ${emote[0]} ${status}*`
                 }
               }
             ]
