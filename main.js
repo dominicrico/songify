@@ -737,6 +737,35 @@ MongoClient.connect(url, {
             ]
           })
         }
+      } else if (req.fields.text.indexOf('status') === 0) {}
+        const status = req.fields.text.replace('status ', '')
+        User.updateOne({user_id: req.fields.user_id}, {$set: {original_status: status}}).then(user => {
+          return res.status(200).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": `*Your status when songify is not running is now set to: ${status}*`
+                }
+              }
+            ]
+          })
+        }).catch(err => {
+          createLogEntry('received_command_failure', 'slack', err.message , user._id, true)
+
+          return res.status(500).json({
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Sorry, something went wrong... Please try it again."
+                }
+              }
+            ]
+          })
+        })
       } else if (req.fields.text === 'pause') {
         User.updateOne({user_id: req.fields.user_id}, {$set: {pause_songify: true}}).then(user => {
           return res.status(200).json({
